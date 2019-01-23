@@ -15,9 +15,8 @@ ext_module = Extension('_qsystem',
         extra_compile_args=['-std=c++17']
         )
 
-
 setup (name = 'QSystem',
-       version='1.0.0rc1',
+       version='1.0.0rc2',
        author='Evandro Chagas Ribeiro da Rosa',
        author_email='ev.crr97@gmail.com',
        description='A Python quantum computer simulator',
@@ -32,3 +31,4 @@ setup (name = 'QSystem',
             'License :: OSI Approved :: MIT License',
         ]
        )
+

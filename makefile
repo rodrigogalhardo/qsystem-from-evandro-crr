@@ -26,7 +26,7 @@ qsystem.py:
 	ln -s src/qsystem.py $@
 
 dist: src/qsystem.cpp qsystem/__init__.py
-	python setup.py sdist bdist_wheel
+	python setup.py sdist 
 
 qsystem/__init__.py:
 	mkdir -p qsystem
