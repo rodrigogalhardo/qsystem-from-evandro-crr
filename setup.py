@@ -12,11 +12,12 @@ ext_module = Extension('_qsystem',
                  'src/qs_errors.cpp',
                  'src/qs_evol.cpp',
                  'src/qs_utility.cpp'],
+        include_dirs=['armadillo-code/include'],
         extra_compile_args=['-std=c++17']
         )
 
 setup (name = 'QSystem',
-       version='1.0.0rc2',
+       version='1.0.0rc3',
        author='Evandro Chagas Ribeiro da Rosa',
        author_email='ev.crr97@gmail.com',
        description='A Python quantum computer simulator',
