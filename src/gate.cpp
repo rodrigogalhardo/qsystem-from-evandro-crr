@@ -106,7 +106,7 @@ void Gate::make_cgate(std::string name,
 
     if (cond) {
       size_t row = (i ^ x);
-      cm(row, i) = pow(-1, parity(i ^ z));
+      cm(row, i) = pow(-1, parity(i & z));
     } else {
       cm(i,i) = 1;
     }
@@ -117,7 +117,8 @@ void Gate::make_cgate(std::string name,
 
 void Gate::ls() {
   for (auto& gate: cmap) {
-    std::cout << gate.first << std::endl;
+    std::cout << gate.first << " - "
+              << log2(gate.second.n_rows)  << " qbits long"<< std::endl;
   }
 }
 
