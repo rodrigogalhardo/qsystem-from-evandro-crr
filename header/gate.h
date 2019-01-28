@@ -36,8 +36,8 @@ class Gate {
 
     Gate(std::string path);
 
-    arma::sp_cx_mat get(char gat);
-    arma::sp_cx_mat cget(std::string gat);
+    arma::sp_cx_mat& get(char gat);
+    arma::sp_cx_mat& cget(std::string gat);
 
     void make_gate(char name, vec_cx matrix);
 
@@ -50,6 +50,8 @@ class Gate {
     void make_cgate(std::string name,
                     std::string gates,
             std::vector<size_t> control);
+
+    void ls();
 
     void save(std::string path);
 

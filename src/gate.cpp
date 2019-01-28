@@ -49,11 +49,11 @@ Gate::Gate(std::string path) {
   mtar_close(&tar);
 }
 
-sp_cx_mat Gate::get(char gate) {
+sp_cx_mat& Gate::get(char gate) {
   return map.at(gate);
 }
 
-sp_cx_mat Gate::cget(std::string gate) {
+sp_cx_mat& Gate::cget(std::string gate) {
   return cmap.at(gate);
 }
 
@@ -76,7 +76,6 @@ void Gate::make_gate(std::string name,
 
   cmap[name] = m;
 }
-
 
 void Gate::make_cgate(std::string name,
                       std::string gates,
@@ -114,6 +113,12 @@ void Gate::make_cgate(std::string name,
   }
 
   cmap[name] = cm;
+}
+
+void Gate::ls() {
+  for (auto& gate: cmap) {
+    std::cout << gate.first << std::endl;
+  }
 }
 
 void Gate::save(std::string path){
