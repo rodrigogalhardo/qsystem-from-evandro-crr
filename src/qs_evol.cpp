@@ -51,8 +51,7 @@ void QSystem::evol(std::string gates) {
 }
 
 void QSystem::evol(std::string u, size_t qbit) {
-  auto m = gate.cget(u);
-  auto size_m = log2(m.n_rows);
+  auto size_m = log2(gate.cget(u).n_rows);
 
   for (size_t i = qbit; i < qbit+size_m; i++) {
     if ((i < size and ops[i] != 'I') or (i >= size and an_ops[size-i] != 'I')) {
@@ -90,28 +89,19 @@ void QSystem::sync() {
     if (int(ops[i]) > 31) {
       evolm = kron(evolm, gate.get(ops[i])); 
     } else {
-      auto m = gate.cget(mops[int(ops[i])]);
+      auto &m = gate.cget(mops[int(ops[i])]);
       evolm = kron(evolm, m);
       i += log2(m.n_rows)-1;
-      if ((i+1) >= size) {
-        i -= size;
-        break;
-      }
     }
   }
 
-  if (i == size)
-    i = 0;
-
-  for (; i < an_size; i++) {
+  for (i -= size; i < an_size; i++) {
     if (int(ops[i]) > 31) {
       evolm = kron(evolm, gate.get(an_ops[i])); 
     } else {
-      auto m = gate.cget(mops[i]);
+      auto &m = gate.cget(mops[i]);
       evolm = kron(evolm, m);
       i += log2(m.n_rows)-1;
-      if ((i+1) >= an_size) 
-        break;
     }
   }
 
