@@ -1,5 +1,5 @@
-SRC = $(wildcard src/*.cpp) src/qsystem.cpp
-OBJ = $(SRC:.cpp=.o) src/microtar.o
+OBJ = src/gate.o src/microtar.o src/qs_ancillas.o src/qs_errors.o
+OBJ += src/qs_evol.o src/qs_utility.o src/qsystem.o
 HEADER = $(wildcard header/*.h)
 
 OUT = _qsystem.so
