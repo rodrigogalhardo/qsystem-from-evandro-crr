@@ -29,9 +29,9 @@
 typedef long unsigned int size_t;
 %}
 
-%template(VecSize) std::vector<size_t>;
-%template(VecCx) std::vector<std::complex<double>>;
-%template(VecInt) std::vector<int>;
+%template(vec_size) std::vector<size_t>;
+%template(vec_cx) std::vector<std::complex<double>>;
+%template(vec_int) std::vector<int>;
 
 %module qsystem
 %{
