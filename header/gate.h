@@ -29,6 +29,7 @@
 
 using size_t = long unsigned;
 using vec_cx = std::vector<std::complex<double>>;
+using vec_size = std::vector<size_t>;
 
 class Gate {
   public:
@@ -39,17 +40,18 @@ class Gate {
     arma::sp_cx_mat& get(char gat);
     arma::sp_cx_mat& cget(std::string gat);
 
-    void make_gate(char name, vec_cx matrix);
+    void make_gate(char name,
+                 vec_cx matrix);
 
     void make_gate(std::string name,
                         size_t size,
-           std::vector<size_t> row,
-           std::vector<size_t> col,
+                      vec_size row,
+                      vec_size col,
                         vec_cx value);
 
     void make_cgate(std::string name,
                     std::string gates,
-            std::vector<size_t> control);
+                       vec_size control);
 
     void ls();
 
