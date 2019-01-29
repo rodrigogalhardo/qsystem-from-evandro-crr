@@ -117,7 +117,15 @@ void QSystem::sync() {
   syncc = true;
 }
 
-void QSystem::cnot(size_t target, std::vector<size_t> control) {
+void QSystem::clar() {
+  std::memset(ops, 'I', size*sizeof(char));
+  std::memset(an_ops, 'I', an_size*sizeof(char));
+  mops.clear();
+
+  syncc = true;
+}
+
+void QSystem::cnot(size_t target, vec_size control) {
   if (not syncc) sync();
 
   size_t eyesize = 1ul << (size+an_size);
