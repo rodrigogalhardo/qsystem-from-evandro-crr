@@ -126,6 +126,55 @@ std::vector<int> QSystem::get_an_bits() {
   return vec;
 }
 
+PyObject* QSystem::get_qbits() {
+  if (not syncc) sync();
+  qbits.sync();
+
+  PyObject* csc_tuple = PyTuple_New(3);
+  PyObject* val = PyList_New(qbits.n_nonzero);
+  PyObject* row_ind = PyList_New(qbits.n_nonzero);
+  for (size_t i = 0; i < qbits.n_nonzero; i++) {
+    PyList_SetItem(val, i, PyComplex_FromDoubles(qbits.values[i].real(),
+                                                 qbits.values[i].imag()));
+    PyList_SetItem(row_ind, i, PyLong_FromLong(qbits.row_indices[i]));
+  }
+  PyTuple_SetItem(csc_tuple, 0, val);
+  PyTuple_SetItem(csc_tuple, 1, row_ind);
+
+  PyObject* col_ptr = PyList_New(qbits.n_cols+1);
+  for (size_t i = 0; i < qbits.n_cols+1; i++) 
+    PyList_SetItem(col_ptr, i, PyLong_FromLong(qbits.col_ptrs[i]));
+  PyTuple_SetItem(csc_tuple, 2, col_ptr);
+
+  PyObject* size_tuple = PyTuple_New(2);
+  PyTuple_SetItem(size_tuple, 0, PyLong_FromLong(qbits.n_rows));
+  PyTuple_SetItem(size_tuple, 1, PyLong_FromLong(qbits.n_cols));
+
+  PyObject* result = PyTuple_New(2);
+
+  PyTuple_SetItem(result, 0, csc_tuple);
+  PyTuple_SetItem(result, 1, size_tuple);
+
+  return result;
+}
+
+void QSystem::set_qbits(vec_size row_ind,
+                        vec_size col_ptr,
+                          vec_cx values,
+                          size_t nqbits,
+                     std::string state) {
+  if (not syncc) clar();
+
+  qbits = sp_cx_mat(conv_to<uvec>::from(row_ind),
+                    conv_to<uvec>::from(col_ptr),
+                    cx_vec(values),
+                    1ul << nqbits,
+                    state == "pure"? 1ul : 1ul << nqbits);
+                    
+  this->state = state;
+  size = nqbits;
+}
+
 void QSystem::change_to(std::string state) {
   if (state != "mix" and state != "pure") 
     throw std::invalid_argument{"Argument \'state\' must be \"pure\" or \"mix\", not \""
