@@ -59,7 +59,7 @@ QSystem::~QSystem() {
   if (an_bits) delete[] an_bits;
 }
 
-void QSystem::print_state() {
+std::string QSystem::__str__() {
   auto to_bits = [&](size_t i) {
     std::string sbits{'|'};
     for (size_t j = 0; j < size; j++)
@@ -87,21 +87,20 @@ void QSystem::print_state() {
   };
 
   if (not syncc) sync();
+  std::stringstream out;
   if (state == "pure") {
-    std::stringstream ss;
-
     for (auto i = qbits.begin(); i != qbits.end(); ++i) {
       if (abs((cx_double)*i) < 1e-14) continue; 
-      ss << cx_to_str(*i) << to_bits(i.row()) << '\n';
+      out << cx_to_str(*i) << to_bits(i.row()) << '\n';
     }
-    std::cout << ss.str() << std::endl; 
   } else if (state == "mix") {
     for (auto i = qbits.begin(); i != qbits.end(); ++i) {
       auto aux = cx_to_str(*i);
-      std::cout << "(" << i.row() << ", " << i.col() << ")    " <<
+      out << "(" << i.row() << ", " << i.col() << ")    " <<
         (aux == ""? "1" : aux)  << std::endl;
     }
   }
+  return out.str();
 }
 
 size_t QSystem::get_size() {

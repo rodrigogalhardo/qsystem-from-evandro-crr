@@ -59,7 +59,7 @@ class QSystem {
     void            dpl_channel(size_t qbit, double p);
 
     /* utility */
-    void            print_state();
+    std::string     __str__();
     size_t          get_size();
     std::string     get_state();
     void            save(std::string path);
