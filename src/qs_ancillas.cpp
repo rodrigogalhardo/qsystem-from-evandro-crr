@@ -23,8 +23,6 @@
 
 #include "../header/qsystem.h"
 
-using namespace arma;
-
 void QSystem::add_ancillas(size_t an_num) {
   if (an_num == 0) 
     throw std::invalid_argument{"Argument \'an_num\' must be greater than 0"};
@@ -36,8 +34,8 @@ void QSystem::add_ancillas(size_t an_num) {
 
   std::memset(an_ops, 'I', an_size*sizeof(char));
 
-  sp_cx_mat an_qbits{1ul << an_size, state == "mix" ? 1lu << an_size : 1};
-  an_qbits(0,0) = 1;
+  sp_cx_mat an_qbits{1l << an_size, state == "mix" ? 1l << an_size : 1};
+  an_qbits.coeffRef(0,0) = 1;
   qbits = kron(qbits, an_qbits);
 }
 
@@ -47,24 +45,26 @@ void QSystem::rm_ancillas() {
   if (not syncc) sync();
 
   auto tr_pure = [&]() {
-    auto sizet = 1ul << (size+an_size-1);
+    auto sizet = 1l << (size+an_size-1);
     sp_cx_mat qbitst{sizet, 1};
 
     if (an_bits[an_size-1] == none) 
       an_measure(an_size-1);
 
-    for (auto i = qbits.begin(); i != qbits.end(); ++i) 
-      qbitst(i.row() >> 1, 0) += *i;
+    for (it_mat i(qbits, 0); i; ++i) 
+      qbitst.coeffRef(i.row() >> 1, 0) += i.value();
 
     return qbitst;
   };
 
   auto tr_mix = [&]() {
-    auto sizet = 1ul << (size+an_size-1);
+    auto sizet = 1l << (size+an_size-1);
     sp_cx_mat qbitst{sizet, sizet};
 
-    for (auto i = qbits.begin(); i != qbits.end(); ++i) 
-      qbitst(i.row() >> 1, i.col() >> 1) += *i;
+    for (auto k = 0l; k < qbits.outerSize(); ++k) {
+      for (it_mat i(qbits, k); i; ++i) 
+        qbitst.coeffRef(i.row() >> 1, i.col() >> 1) += i.value();
+    }
 
     return qbitst;
   };

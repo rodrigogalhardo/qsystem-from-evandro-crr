@@ -23,11 +23,49 @@
 
 #include "../header/gate.h"
 #include "../header/microtar.h"
+using namespace std::complex_literals;
 
-using namespace arma;
+Gate::Gate() {
+  sp_cx_mat m(2,2);
+  m.coeffRef(0, 0) = 1;
+  m.coeffRef(1, 1) = 1;
+  map['I'] = m;
 
-Gate::Gate() {}
+  m =  sp_cx_mat(2,2);
+  m.coeffRef(0, 1) = 1;
+  m.coeffRef(1, 0) = 1;
+  map['X'] = m;
+ 
+  m =  sp_cx_mat(2,2);
+  m.coeffRef(0, 1) = -1i;
+  m.coeffRef(1, 0) = 1i;
+  map['Y'] = m;
+  
+  m =  sp_cx_mat(2,2);
+  m.coeffRef(0, 0) = 1;
+  m.coeffRef(1, 1) = -1;
+  map['Z'] = m;
+ 
+  m =  sp_cx_mat(2,2);
+  m.coeffRef(0, 0) = 1/sqrt(2);
+  m.coeffRef(0, 1) = 1/sqrt(2);
+  m.coeffRef(1, 0) = 1/sqrt(2);
+  m.coeffRef(1, 1) = -1/sqrt(2);
+  map['H'] = m;
+ 
+  m =  sp_cx_mat(2,2);
+  m.coeffRef(0, 0) = 1;
+  m.coeffRef(1, 1) = 1i;
+  map['S'] = m;
 
+  m =  sp_cx_mat(2,2);
+  m.coeffRef(0, 0) = 1;
+  m.coeffRef(1, 1) = 1/sqrt(2)+ 1i/sqrt(2);
+  map['T'] = m;
+ 
+}
+
+/*
 Gate::Gate(std::string path) {
   mtar_t tar;
   mtar_header_t h;
@@ -48,6 +86,7 @@ Gate::Gate(std::string path) {
 
   mtar_close(&tar);
 }
+*/
 
 sp_cx_mat& Gate::get(char gate) {
   return map.at(gate);
@@ -58,20 +97,24 @@ sp_cx_mat& Gate::cget(std::string gate) {
 }
 
 void Gate::make_gate(char name, vec_cx matrix) {
-  map[name] = sp_cx_mat{cx_mat{{{matrix[0], matrix[1]},
-                                {matrix[2], matrix[3]}}}};
+  sp_cx_mat m(2,2);
+  m.coeffRef(0, 0) = matrix[0];
+  m.coeffRef(0, 1) = matrix[1];
+  m.coeffRef(1, 0) = matrix[2];
+  m.coeffRef(1, 1) = matrix[3];
+  map[name] = m;
 }
 
 void Gate::make_gate(std::string name,
                           size_t size, 
-             std::vector<size_t> row,
-             std::vector<size_t> col,
+                        vec_size row,
+                        vec_size col,
                           vec_cx value) {
-  auto sizem = 1ul << size;
+  auto sizem = 1l << size;
   sp_cx_mat m{sizem, sizem};
 
   for (size_t i = 0; i < row.size(); i++) {
-    m(row[i], col[i]) = value[i];
+    m.coeffRef(row[i], col[i]) = value[i];
   }
 
   cmap[name] = m;
@@ -79,7 +122,7 @@ void Gate::make_gate(std::string name,
 
 void Gate::make_cgate(std::string name,
                       std::string gates,
-              std::vector<size_t> control) {
+              vec_size control) {
 
   size_t size = gates.size();
   size_t x = 0;
@@ -97,7 +140,7 @@ void Gate::make_cgate(std::string name,
     return x & 1; 
   };
 
-  sp_cx_mat cm{1ul << size, 1ul << size};
+  sp_cx_mat cm{1u << size, 1u << size};
 
   for (size_t i = 0; i < (1ul << size); i++) {
     bool cond = true;
@@ -106,22 +149,25 @@ void Gate::make_cgate(std::string name,
 
     if (cond) {
       size_t row = (i ^ x);
-      cm(row, i) = pow(-1, parity(i & z));
+      cm.coeffRef(row, i) = pow(-1, parity(i & z));
     } else {
-      cm(i,i) = 1;
+      cm.coeffRef(i,i) = 1;
     }
   }
 
   cmap[name] = cm;
 }
 
-void Gate::ls() {
+std::string Gate::__str__() {
+  std::stringstream out;
   for (auto& gate: cmap) {
-    std::cout << gate.first << " - "
-              << log2(gate.second.n_rows)  << " qbits long"<< std::endl;
+    out << gate.first << " - "
+        << log2(gate.second.rows())
+        << " qbits long"<< std::endl;
   }
+  return out.str();
 }
-
+/*
 void Gate::save(std::string path){
   mtar_t tar;
   mtar_open(&tar, path.c_str(), "w");
@@ -139,4 +185,4 @@ void Gate::save(std::string path){
   mtar_finalize(&tar);
   mtar_close(&tar);
 }
-
+*/

@@ -23,22 +23,54 @@
 
 #pragma once
 #include <map>
-#include <armadillo>
+#include <eigen3/Eigen/SparseCore>
+#include <eigen3/Eigen/Dense>
 #include <vector>
 #include <string>
 
 using size_t = long unsigned;
-using vec_cx = std::vector<std::complex<double>>;
+using cx = std::complex<double>;
+using sp_cx_mat = Eigen::SparseMatrix<cx, Eigen::ColMajor>;
+using sp_cx_vec = Eigen::SparseVector<cx>;
+using cx_mat = Eigen::MatrixXcd;
+using it_mat = sp_cx_mat::InnerIterator;
+using it_vec = sp_cx_vec::InnerIterator;
+using vec_cx = std::vector<cx>;
 using vec_size = std::vector<size_t>;
-
+/*
+class mat_it {
+    public:
+      mat_it(sp_cx_mat& mat) : mat{mat} {}
+      sp_cx_mat::InnerIterator& begin() {
+        ncol = 1;
+        curr = sp_cx_mat::InnerIterator(mat, 0);
+        return curr;
+      }
+      sp_cx_mat::InnerIterator end() {
+        if 
+      }
+      sp_cx_mat::InnerIterator& operator++() {
+        ++curr;
+        if (not curr and ncul < mat.outerSize()) {
+          curr = sp_cx_mat::InnerIterator(mat, ncol)
+          ++ncol;
+        }
+        return curr;
+      }
+    private:
+      sp_cx_mat& mat;
+      sp_cx_mat::InnerIterator curr;
+      size_t ncol;  
+};
+*/ 
 class Gate {
-  public:
+ public:
     Gate();
 
-    Gate(std::string path);
+//  Gate(std::string path);
 
-    arma::sp_cx_mat& get(char gat);
-    arma::sp_cx_mat& cget(std::string gat);
+    sp_cx_mat& get(char gat);
+    sp_cx_mat& cget(std::string gat);
 
     void make_gate(char name,
                  vec_cx matrix);
@@ -53,28 +85,14 @@ class Gate {
                     std::string gates,
                        vec_size control);
 
-    void ls();
+    std::string __str__();
 
-    void save(std::string path);
+//  void save(std::string path);
 
   private:
-  std::map<std::string, arma::sp_cx_mat> cmap;
+  std::map<std::string, sp_cx_mat> cmap;
 
-  std::map<char, arma::sp_cx_mat> map{
-    {'I', arma::sp_cx_mat{arma::cx_mat{{{{1,0}, {0,0}},
-                                        {{0,0}, {1,0}}}}}},
-    {'X', arma::sp_cx_mat{arma::cx_mat{{{{0,0}, {1,0}},
-                                        {{1,0}, {0,0}}}}}},
-    {'Y', arma::sp_cx_mat{arma::cx_mat{{{{0,0}, {0,-1}},
-                                        {{0,1}, {0,0}}}}}},
-    {'Z', arma::sp_cx_mat{arma::cx_mat{{{{1,0}, {0,0}},
-                                        {{0,0}, {-1,0}}}}}},
-    {'H', arma::sp_cx_mat{(1/sqrt(2))*arma::cx_mat{{{{1,0}, {1,0}},
-                                                    {{1,0}, {-1,0}}}}}},
-    {'S', arma::sp_cx_mat{arma::cx_mat{{{{1,0}, {0,0}},
-                                        {{0,0}, {0,1}}}}}},
-    {'T', arma::sp_cx_mat{arma::cx_mat{{{{1,0}, {0,0}},
-                                        {{0,0}, {1/sqrt(2),1/sqrt(2)}}}}}},
-  };
+  std::map<char, sp_cx_mat> map;
+
 };
 

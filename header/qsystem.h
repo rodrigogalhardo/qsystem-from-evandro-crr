@@ -24,6 +24,7 @@
 #pragma once
 #include "gate.h"
 #include <Python.h>
+#include <eigen3/unsupported/Eigen/KroneckerProduct>
 
 enum Bit {none, zero, one};
 using vec_str = std::vector<std::string>;
@@ -36,9 +37,11 @@ class QSystem {
              Gate& gate,
        std::string state);
 
+/*
     QSystem(std::string path,
                  size_t seed,
                   Gate& gate);
+*/
     ~QSystem();
     
     /* evolution */
@@ -63,16 +66,16 @@ class QSystem {
     std::string     __str__();
     size_t          get_size();
     std::string     get_state();
-    void            save(std::string path);
+//  void            save(std::string path);
     void            change_to(std::string state);
     vec_int         get_bits();
-    PyObject*       get_qbits();
+/*  PyObject*       get_qbits();
     void            set_qbits(vec_size row_ind,
                               vec_size col_ptr,
                                 vec_cx values,
                                 size_t nqbits,
                            std::string state);
-
+*/
     /* ancilla */
     void            add_ancillas(size_t an_num);
     void            rm_ancillas();
@@ -86,7 +89,7 @@ class QSystem {
   private:
     void            sync();
     void            clar();
-    arma::sp_cx_mat make_gate(arma::sp_cx_mat gate, size_t qbit);
+    sp_cx_mat       make_gate(sp_cx_mat gate, size_t qbit);
 
     Gate&           gate;
     size_t          size;
@@ -94,12 +97,20 @@ class QSystem {
     char*           ops;
     vec_str         mops;
     bool            syncc;
-    arma::sp_cx_mat qbits;
+    sp_cx_mat qbits;
     Bit*            bits;
 
     /* ancilla */
     size_t          an_size;
     char*           an_ops;
     Bit*            an_bits;
+
+    sp_cx_mat kron(const sp_cx_mat& a, const sp_cx_mat& b) {
+      return kroneckerProduct(a,b).eval();
+    }
+
+    sp_cx_mat eye(long int rows, long int cols) {
+      return cx_mat::Identity(rows,cols).sparseView();
+    }
 };
 

@@ -25,21 +25,20 @@
 #include <iomanip>
 #include <sstream>
 
-using namespace arma;
-
 QSystem::QSystem(size_t nqbits, size_t seed, Gate& gate, std::string state) :
   gate{gate}, size{nqbits}, state{state}, ops{new char[size]}, syncc{true},
-  qbits{1lu << size, state == "mix" ? 1lu << size : 1},
+  qbits{1l << size, state == "mix" ? 1l << size : 1},
   bits{new Bit[size]()}, an_size{0}, an_ops{nullptr}, an_bits{nullptr}
 {
   if (state != "mix" and state != "pure") 
     throw std::invalid_argument{"Argument \'state\' must be \"pure\" or \"mix\", not \""
       + state + "\"."};
-  qbits(0,0) = 1;
+  qbits.coeffRef(0,0) = 1;
   std::memset(ops, 'I', size*sizeof(char));
   std::srand(seed);
 }
 
+/*
 QSystem::QSystem(std::string path, size_t seed, Gate& gate) :
   gate{gate}, syncc{true}, an_size{0}, an_ops{nullptr}, an_bits{nullptr}
 {
@@ -51,6 +50,7 @@ QSystem::QSystem(std::string path, size_t seed, Gate& gate) :
   std::memset(ops, 'I', size*sizeof(char));
   std::srand(seed);
 }
+*/
 
 QSystem::~QSystem() {
   delete[] ops;
@@ -89,15 +89,17 @@ std::string QSystem::__str__() {
   if (not syncc) sync();
   std::stringstream out;
   if (state == "pure") {
-    for (auto i = qbits.begin(); i != qbits.end(); ++i) {
-      if (abs((cx_double)*i) < 1e-14) continue; 
-      out << cx_to_str(*i) << to_bits(i.row()) << '\n';
+    for (it_mat i(qbits, 0); i; ++i) {
+      if (abs(i.value()) < 1e-14) continue; 
+      out << cx_to_str(i.value()) << to_bits(i.row()) << '\n';
     }
   } else if (state == "mix") {
-    for (auto i = qbits.begin(); i != qbits.end(); ++i) {
-      auto aux = cx_to_str(*i);
-      out << "(" << i.row() << ", " << i.col() << ")    " <<
-        (aux == ""? "1" : aux)  << std::endl;
+    for (auto k = 0l; k < qbits.outerSize(); ++k) {
+      for (it_mat i(qbits, k); i; ++i) {
+        auto aux = cx_to_str(i.value());
+        out << "(" << i.row() << ", " << i.col() << ")    " <<
+          (aux == ""? "1" : aux)  << std::endl;
+      }
     }
   }
   return out.str();
@@ -125,6 +127,7 @@ std::vector<int> QSystem::get_an_bits() {
   return vec;
 }
 
+/*
 PyObject* QSystem::get_qbits() {
   if (not syncc) sync();
   qbits.sync();
@@ -173,6 +176,7 @@ void QSystem::set_qbits(vec_size row_ind,
   this->state = state;
   size = nqbits;
 }
+*/
 
 void QSystem::change_to(std::string state) {
   if (state != "mix" and state != "pure") 
@@ -183,11 +187,12 @@ void QSystem::change_to(std::string state) {
     return;
 
   if (state == "mix") {
-    qbits = qbits*qbits.t();
+    qbits = qbits*qbits.adjoint();
   } else if (state == "pure") {
-    sp_cx_mat nqbits{1ul << (size+an_size), 1};
-    for (size_t i = 0; i < 1ul << (size+an_size); i++)
-      nqbits(i,0) = sqrt(qbits(i,i).real());
+    sp_cx_mat nqbits{1l << (size+an_size), 1};
+    sp_cx_vec diag = qbits.diagonal().sparseView();
+    for (it_vec i(diag); i; ++i)
+      nqbits.coeffRef(i.index(), 0) = sqrt(i.value().real());
     qbits = nqbits;
   }
   
@@ -201,22 +206,24 @@ std::string QSystem::get_state() {
 sp_cx_mat QSystem::make_gate(sp_cx_mat gate, size_t qbit) {
   sp_cx_mat m;
   if (qbit == 0) {
-    size_t eyesize = 1ul << (size+an_size-1);
-    m = kron(gate, eye<sp_cx_mat>(eyesize, eyesize));
+    size_t eyesize = 1l << (size+an_size-1);
+    m = kron(gate, eye(eyesize, eyesize));
   } else if (qbit == size+an_size-1) {
-    size_t eyesize = 1ul << (size+an_size-1);
-    m = kron(eye<sp_cx_mat>(eyesize, eyesize), gate);
+    size_t eyesize = 1l << (size+an_size-1);
+    m = kron(eye(eyesize, eyesize), gate);
   } else {
-    size_t eyesize = 1ul << qbit;
-    m = kron(eye<sp_cx_mat>(eyesize, eyesize), gate);
-    eyesize = 1ul << (size+an_size-qbit-1);
-    m = kron(m, eye<sp_cx_mat>(eyesize, eyesize));
+    size_t eyesize = 1l << qbit;
+    m = kron(eye(eyesize, eyesize), gate);
+    eyesize = 1l << (size+an_size-qbit-1);
+    m = kron(m, eye(eyesize, eyesize));
   }
   return m;
 }
 
+/*
 void QSystem::save(std::string path) {
   if (not syncc) sync();
   qbits.save(path, arma_binary);
 }
+*/
 

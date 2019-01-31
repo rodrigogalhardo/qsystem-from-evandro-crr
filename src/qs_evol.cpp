@@ -23,8 +23,6 @@
 
 #include "../header/qsystem.h"
 
-using namespace arma;
-
 void QSystem::evol(char gate, size_t qbit) {
   if (ops[qbit] != 'I') sync();
 
@@ -51,7 +49,7 @@ void QSystem::evol(std::string gates) {
 }
 
 void QSystem::evol(std::string u, size_t qbit) {
-  auto size_m = log2(gate.cget(u).n_rows);
+  auto size_m = log2(gate.cget(u).rows());
 
   for (size_t i = qbit; i < qbit+size_m; i++) {
     if ((i < size and ops[i] != 'I') or (i >= size and an_ops[size-i] != 'I')) {
@@ -82,7 +80,7 @@ void QSystem::sync() {
     i = 1;
   } else {
     evolm = gate.cget(mops[int(ops[0])]);
-    i = log2(evolm.n_rows);
+    i = log2(evolm.rows());
   } 
 
   for (; i < size; i++) {
@@ -91,7 +89,7 @@ void QSystem::sync() {
     } else {
       auto &m = gate.cget(mops[int(ops[i])]);
       evolm = kron(evolm, m);
-      i += log2(m.n_rows)-1;
+      i += log2(m.rows())-1;
     }
   }
 
@@ -101,14 +99,14 @@ void QSystem::sync() {
     } else {
       auto &m = gate.cget(mops[i]);
       evolm = kron(evolm, m);
-      i += log2(m.n_rows)-1;
+      i += log2(m.rows())-1;
     }
   }
 
   if (state == "pure")
     qbits = evolm*qbits;
   else if (state == "mix")
-    qbits = evolm*qbits*evolm.t();
+    qbits = evolm*qbits*evolm.adjoint();
 
   std::memset(ops, 'I', size*sizeof(char));
   std::memset(an_ops, 'I', an_size*sizeof(char));
@@ -128,7 +126,7 @@ void QSystem::clar() {
 void QSystem::cnot(size_t target, vec_size control) {
   if (not syncc) sync();
 
-  size_t eyesize = 1ul << (size+an_size);
+  auto eyesize = 1l << (size+an_size);
   sp_cx_mat cnotm{eyesize, eyesize};
 
   for (size_t i = 0; i < (1lu << (size+an_size)); i++) {
@@ -138,9 +136,9 @@ void QSystem::cnot(size_t target, vec_size control) {
       cond = cond and ((1ul << (size+an_size-control[k]-1)) & i);
 
     if (cond)
-      cnotm(i, i ^ (1ul  << (size+an_size-target-1))) = 1; 
+      cnotm.coeffRef(i, i ^ (1ul  << (size+an_size-target-1))) = 1; 
     else 
-      cnotm(i, i) = 1;
+      cnotm.coeffRef(i, i) = 1;
   }
 
   if (state == "pure")
@@ -184,7 +182,7 @@ void QSystem::ctrl(std::string gates, vec_size control) {
     auto [ii, fi] = cond(i.row());
     auto [ij, fj] = cond(i.col());
     
-    nqbits(ii, ij) = ((std::complex<double>)*i)*fi*fj;
+    nqbits(ii, ij) = ((cx)*i)*fi*fj;
   }
 
   qbits = nqbits;
@@ -200,17 +198,17 @@ void QSystem::measure(size_t qbit) {
 
   double pm = 0;
   if (state == "pure") {
-    for (auto i = qbits.begin(); i != qbits.end(); ++i) {
+    for (it_mat i(qbits, 0); i; ++i) {
       if (~i.row() & 1ul << (size+an_size-qbit-1)) {
-        auto valor = abs((cx_double) *i);
+        auto valor = abs(i.value());
         pm += valor*valor;
       }
     }
   } else if (state == "mix") {
-    sp_cx_mat m_aux = qbits.diag(); 
-    for (auto i = m_aux.begin(); i != m_aux.end(); ++i) 
+    sp_cx_vec m_aux = qbits.diagonal().sparseView(); 
+    for (it_vec i(m_aux); i; ++i) 
       if (~i.row() & 1ul << (size+an_size-qbit-1)) 
-        pm += (*i).real();
+        pm += i.value().real();
   }
 
   auto result = [&](Bit mea, double pm) {
@@ -219,17 +217,19 @@ void QSystem::measure(size_t qbit) {
     if (qbit < size) bits[qbit] = mea;
       else an_bits[qbit-size] = mea;
 
-    sp_cx_mat qbitsm{1ul << (size+an_size), state == "pure"? 1 : 1ul << (size+an_size)};
+    sp_cx_mat qbitsm{1u << (size+an_size), state == "pure"? 1 : 1u << (size+an_size)};
 
     if (state == "pure") {
-      for (auto i = qbits.begin(); i != qbits.end(); ++i) 
+      for (it_mat i(qbits, 0); i ; ++i) 
         if (lnot(i.row()) & 1ul << (size+an_size-qbit-1))  
-          qbitsm(i.row(), 0) = (cx_double)(*i)/sqrt(pm);
+          qbitsm.coeffRef(i.row(), 0) = i.value()/sqrt(pm);
     } else if (state == "mix") {
-      for (auto i = qbits.begin(); i != qbits.end(); ++i) 
-        if (lnot(i.row()) & 1ul << (size+an_size-qbit-1) 
-            and lnot(i.col()) & 1ul << (size+an_size-qbit-1)) 
-          qbitsm(i.row(), i.col()) = (cx_double)(*i)/pm;
+      for (auto k = 0l; k < qbits.outerSize(); ++k) {
+        for (it_mat i(qbits, k); i; ++i) 
+          if (lnot(i.row()) & 1ul << (size+an_size-qbit-1) 
+              and lnot(i.col()) & 1ul << (size+an_size-qbit-1)) 
+            qbitsm.coeffRef(i.row(), i.col()) = i.value()/pm;
+      }
     }
 
     return qbitsm;

@@ -23,8 +23,6 @@
 
 #include "../header/qsystem.h"
 
-using namespace arma;
-
 void QSystem::flip(char gate, size_t qbit, double p) {
   if (not syncc) sync();
 
@@ -33,8 +31,8 @@ void QSystem::flip(char gate, size_t qbit, double p) {
       evol(gate, qbit);
   } else if (state == "mix") {
     sp_cx_mat e0 = make_gate(this->gate.get(gate), qbit)*sqrt(p);
-    size_t eyesize = 1ul << (size+an_size);
-    sp_cx_mat e1 = eye<sp_cx_mat>(eyesize, eyesize)*sqrt(1.f-p);
+    size_t eyesize = 1l << (size+an_size);
+    sp_cx_mat e1 = eye(eyesize, eyesize)*sqrt(1.f-p);
     qbits = e0*qbits*e0 + e1*qbits*e1;
   }
 
@@ -44,12 +42,17 @@ void QSystem::amp_damping(size_t qbit, double p) {
   if (state == "pure")
     throw std::runtime_error{"\'state\' must be in \"mix\" to apply this channel."};
 
+  sp_cx_mat ie0(2,2);
+  ie0.coeffRef(0,0) = 1;
+  ie0.coeffRef(1,1) = sqrt(1-p);
+
+  sp_cx_mat ie1(2,2);
+  ie0.coeffRef(0,1) = sqrt(p);
+
   if (not syncc) sync();
 
-  sp_cx_mat e0 = make_gate(sp_cx_mat{cx_mat{{{{1, 0}, {0, 0}},
-                                             {{0, 0}, {sqrt(1-p), 0}}}}}, qbit);
-  sp_cx_mat e1 = make_gate(sp_cx_mat{cx_mat{{{{0, 0}, {sqrt(p), 0}},
-                                             {{0, 0}, {0, 0}}}}}, qbit);
+  sp_cx_mat e0 = make_gate(ie0, qbit);
+  sp_cx_mat e1 = make_gate(ie1, qbit);
   qbits = e0*qbits*e0 + e1*qbits*e1;
 }
 
