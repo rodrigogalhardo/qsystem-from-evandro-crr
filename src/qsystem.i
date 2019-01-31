@@ -73,11 +73,6 @@ typedef long unsigned int size_t;
 def get_matrix(q):
     from scipy import sparse
     return sparse.csc_matrix(q.get_qbits()[0], q.get_qbits()[1])
- 
-def set_matrix(q, m, size, state):
-    from scipy import sparse
-    m = sparse.csc_matrix(m)
-    q.set_qbits(m.indices.tolist(), m.indptr.tolist(), m.data.tolist(), size, state)
 
 %}
 

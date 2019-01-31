@@ -24,93 +24,71 @@
 #pragma once
 #include "gate.h"
 #include <Python.h>
-#include <eigen3/unsupported/Eigen/KroneckerProduct>
-
-enum Bit {none, zero, one};
-using vec_str = std::vector<std::string>;
-using vec_int = std::vector<int>;
 
 class QSystem {
+  enum Bit {none, zero, one};
   public:
     QSystem(size_t nqbits,
             size_t seed,
              Gate& gate,
        std::string state);
 
-/*
-    QSystem(std::string path,
-                 size_t seed,
-                  Gate& gate);
-*/
     ~QSystem();
     
     /* evolution */
-    void            evol(char gate, size_t qbit);
-    void            evol(char gate, size_t qbegin, size_t qend);
-    void            evol(std::string gates);
-//  void            ctrl(std::string gates, vec_size control);
-    void            cnot(size_t target, vec_size control);
-    void            evol(std::string u, size_t qbit);
+    void        evol(char gate, size_t qbit);
+    void        evol(char gate, size_t qbegin, size_t qend);
+    void        evol(std::string gates);
+    void        cnot(size_t target, vec_size control);
+    void        evol(std::string u, size_t qbit);
     
     /* measure */
-    void             measure(size_t qbit);
-    void             measure(size_t qbegin, size_t qend);
-    void             measure_all();
+    void         measure(size_t qbit);
+    void         measure(size_t qbegin, size_t qend);
+    void         measure_all();
     
     /* error channel */
-    void            flip(char gate, size_t qbit, double p);
-    void            amp_damping(size_t qbit, double p);
-    void            dpl_channel(size_t qbit, double p);
+    void        flip(char gate, size_t qbit, double p);
+    void        amp_damping(size_t qbit, double p);
+    void        dpl_channel(size_t qbit, double p);
 
     /* utility */
-    std::string     __str__();
-    size_t          get_size();
-    std::string     get_state();
-//  void            save(std::string path);
-    void            change_to(std::string state);
-    vec_int         get_bits();
-/*  PyObject*       get_qbits();
-    void            set_qbits(vec_size row_ind,
-                              vec_size col_ptr,
-                                vec_cx values,
-                                size_t nqbits,
-                           std::string state);
-*/
+    std::string __str__();
+    size_t      get_size();
+    std::string get_state();
+    void        change_to(std::string state);
+    vec_int     get_bits();
+    PyObject*   get_qbits();
+
     /* ancilla */
-    void            add_ancillas(size_t an_num);
-    void            rm_ancillas();
-    void            an_evol(char gate, size_t qbit);
-    void            an_evol(char gate, size_t qbegin, size_t qend);
-    void            an_measure(size_t qbit);
-    void            an_measure(size_t qbegin, size_t qend);
-    size_t          get_an_size();
-    vec_int         get_an_bits();
+    void        add_ancillas(size_t an_num);
+    void        rm_ancillas();
+    void        an_evol(char gate, size_t qbit);
+    void        an_evol(char gate, size_t qbegin, size_t qend);
+    void        an_measure(size_t qbit);
+    void        an_measure(size_t qbegin, size_t qend);
+    size_t      get_an_size();
+    vec_int     get_an_bits();
 
   private:
-    void            sync();
-    void            clar();
-    sp_cx_mat       make_gate(sp_cx_mat gate, size_t qbit);
+    void        sync();
+    void        clar();
+    sp_cx_mat   make_gate(sp_cx_mat gate, size_t qbit);
+    sp_cx_mat   kron(const sp_cx_mat& a, const sp_cx_mat& b);
+    sp_cx_mat   eye(long rows, long cols);
 
-    Gate&           gate;
-    size_t          size;
-    std::string     state;
-    char*           ops;
-    vec_str         mops;
-    bool            syncc;
-    sp_cx_mat qbits;
-    Bit*            bits;
+    Gate&       gate;
+    size_t      size;
+    std::string state;
+    char*       ops;
+    vec_str     mops;
+    bool        syncc;
+    sp_cx_mat   qbits;
+    Bit*        bits;
 
     /* ancilla */
-    size_t          an_size;
-    char*           an_ops;
-    Bit*            an_bits;
-
-    sp_cx_mat kron(const sp_cx_mat& a, const sp_cx_mat& b) {
-      return kroneckerProduct(a,b).eval();
-    }
-
-    sp_cx_mat eye(long int rows, long int cols) {
-      return cx_mat::Identity(rows,cols).sparseView();
-    }
+    size_t      an_size;
+    char*       an_ops;
+    Bit*        an_bits;
 };
 

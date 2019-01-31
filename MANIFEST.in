@@ -1,3 +1,2 @@
 include header/*.h
-include armadillo-code/include/*
-include armadillo-code/include/armadillo_bits/*
+recursive-include eigen3/ *

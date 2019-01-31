@@ -37,6 +37,8 @@ using it_mat = sp_cx_mat::InnerIterator;
 using it_vec = sp_cx_vec::InnerIterator;
 using vec_cx = std::vector<cx>;
 using vec_size = std::vector<size_t>;
+using vec_str = std::vector<std::string>;
+using vec_int = std::vector<int>;
 /*
 class mat_it {
     public:
@@ -67,8 +69,6 @@ class Gate {
  public:
     Gate();
 
-//  Gate(std::string path);
-
     sp_cx_mat& get(char gat);
     sp_cx_mat& cget(std::string gat);
 
@@ -86,8 +86,6 @@ class Gate {
                        vec_size control);
 
     std::string __str__();
-
-//  void save(std::string path);
 
   private:
   std::map<std::string, sp_cx_mat> cmap;

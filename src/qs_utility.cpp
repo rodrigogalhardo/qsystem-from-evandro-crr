@@ -22,6 +22,7 @@
  */                                                                               
 
 #include "../header/qsystem.h"
+#include <eigen3/unsupported/Eigen/KroneckerProduct>
 #include <iomanip>
 #include <sstream>
 
@@ -37,20 +38,6 @@ QSystem::QSystem(size_t nqbits, size_t seed, Gate& gate, std::string state) :
   std::memset(ops, 'I', size*sizeof(char));
   std::srand(seed);
 }
-
-/*
-QSystem::QSystem(std::string path, size_t seed, Gate& gate) :
-  gate{gate}, syncc{true}, an_size{0}, an_ops{nullptr}, an_bits{nullptr}
-{
-  qbits.load(path, arma_binary);
-  size = log2(qbits.n_rows);
-  state = qbits.n_cols > 1 ? "mix" : "pure";
-  ops = new char[size];
-  bits = new Bit[size]();
-  std::memset(ops, 'I', size*sizeof(char));
-  std::srand(seed);
-}
-*/
 
 QSystem::~QSystem() {
   delete[] ops;
@@ -71,7 +58,7 @@ std::string QSystem::__str__() {
     return sbits;    
   };
 
-  auto cx_to_str = [&](std::complex<double> i) {
+  auto cx_to_str = [&](cx i) {
     std::stringstream ss;
     if (fabs(i.imag()) < 1e-14) {
       ss << std::showpos << std::fixed
@@ -127,56 +114,41 @@ std::vector<int> QSystem::get_an_bits() {
   return vec;
 }
 
-/*
 PyObject* QSystem::get_qbits() {
   if (not syncc) sync();
-  qbits.sync();
-
-  PyObject* csc_tuple = PyTuple_New(3);
-  PyObject* val = PyList_New(qbits.n_nonzero);
-  PyObject* row_ind = PyList_New(qbits.n_nonzero);
-  for (size_t i = 0; i < qbits.n_nonzero; i++) {
-    PyList_SetItem(val, i, PyComplex_FromDoubles(qbits.values[i].real(),
-                                                 qbits.values[i].imag()));
-    PyList_SetItem(row_ind, i, PyLong_FromLong(qbits.row_indices[i]));
+  PyObject* top_tuple = PyTuple_New(2);
+  PyObject* rc_tuple = PyTuple_New(2);
+  PyObject* val = PyList_New(qbits.nonZeros());
+  PyObject* row = PyList_New(qbits.nonZeros());
+  PyObject* col = PyList_New(qbits.nonZeros());
+  size_t v = 0;
+  size_t r = 0;
+  size_t c = 0;
+  for (auto k = 0l; k < qbits.outerSize(); ++k) {
+    for (it_mat i(qbits, k); i; ++i) {
+      PyList_SetItem(val, v++, PyComplex_FromDoubles(i.value().real(),
+                                                     i.value().imag()));
+      PyList_SetItem(row, r++, PyLong_FromLong(i.row()));
+      PyList_SetItem(col, c++, PyLong_FromLong(i.col()));
+    } 
   }
-  PyTuple_SetItem(csc_tuple, 0, val);
-  PyTuple_SetItem(csc_tuple, 1, row_ind);
 
-  PyObject* col_ptr = PyList_New(qbits.n_cols+1);
-  for (size_t i = 0; i < qbits.n_cols+1; i++) 
-    PyList_SetItem(col_ptr, i, PyLong_FromLong(qbits.col_ptrs[i]));
-  PyTuple_SetItem(csc_tuple, 2, col_ptr);
+  PyTuple_SetItem(rc_tuple, 0, row);
+  PyTuple_SetItem(rc_tuple, 1, col);
+  PyTuple_SetItem(top_tuple, 0, val);
+  PyTuple_SetItem(top_tuple, 1, rc_tuple);
 
   PyObject* size_tuple = PyTuple_New(2);
-  PyTuple_SetItem(size_tuple, 0, PyLong_FromLong(qbits.n_rows));
-  PyTuple_SetItem(size_tuple, 1, PyLong_FromLong(qbits.n_cols));
+  PyTuple_SetItem(size_tuple, 0, PyLong_FromLong(1l << (size+an_size)));
+  PyTuple_SetItem(size_tuple, 1, PyLong_FromLong(state == "pure"? 1l :
+                                                 1l << (size+an_size)));
 
   PyObject* result = PyTuple_New(2);
-
-  PyTuple_SetItem(result, 0, csc_tuple);
+  PyTuple_SetItem(result, 0, top_tuple);
   PyTuple_SetItem(result, 1, size_tuple);
 
   return result;
 }
-
-void QSystem::set_qbits(vec_size row_ind,
-                        vec_size col_ptr,
-                          vec_cx values,
-                          size_t nqbits,
-                     std::string state) {
-  if (not syncc) clar();
-
-  qbits = sp_cx_mat(conv_to<uvec>::from(row_ind),
-                    conv_to<uvec>::from(col_ptr),
-                    cx_vec(values),
-                    1ul << nqbits,
-                    state == "pure"? 1ul : 1ul << nqbits);
-                    
-  this->state = state;
-  size = nqbits;
-}
-*/
 
 void QSystem::change_to(std::string state) {
   if (state != "mix" and state != "pure") 
@@ -220,10 +192,13 @@ sp_cx_mat QSystem::make_gate(sp_cx_mat gate, size_t qbit) {
   return m;
 }
 
-/*
-void QSystem::save(std::string path) {
-  if (not syncc) sync();
-  qbits.save(path, arma_binary);
+sp_cx_mat QSystem::kron(const sp_cx_mat& a, const sp_cx_mat& b) {
+  return kroneckerProduct(a,b).eval();
 }
-*/
+
+sp_cx_mat QSystem::eye(long int rows, long int cols) {
+  sp_cx_mat m(rows, cols);
+  m.setIdentity();
+  return m;
+}
 
