@@ -45,6 +45,7 @@ class QSystem {
     void            evol(char gate, size_t qbit);
     void            evol(char gate, size_t qbegin, size_t qend);
     void            evol(std::string gates);
+//  void            ctrl(std::string gates, vec_size control);
     void            cnot(size_t target, vec_size control);
     void            evol(std::string u, size_t qbit);
     

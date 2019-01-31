@@ -134,7 +134,7 @@ void QSystem::cnot(size_t target, vec_size control) {
   for (size_t i = 0; i < (1lu << (size+an_size)); i++) {
     bool cond = true;
 
-    for (size_t k = 0; k < control.size(); k++)
+    for (size_t k = 0; (k < control.size()) and cond; k++)
       cond = cond and ((1ul << (size+an_size-control[k]-1)) & i);
 
     if (cond)
@@ -148,6 +148,48 @@ void QSystem::cnot(size_t target, vec_size control) {
   else if (state == "mix")
     qbits = cnotm*qbits*cnotm;
 }
+
+/*
+void QSystem::ctrl(std::string gates, vec_size control) {
+  auto par = [&](size_t x) {
+    for (int i = 32; i > 0; i /= 2)
+      x ^= x >> i;
+    return x & 1; 
+  };
+  if (not syncc) sync();
+
+  size_t eyesize = 1ul << (size+an_size);
+  sp_cx_mat nqbits{eyesize, eyesize};
+
+  size_t x = 0;
+  size_t z = 0;
+  for (size_t i = 0; i < size+an_size; i++) {
+    if (gates[i] == 'X')
+      x |= 1ul << ((size+an_size)-i-1);
+    if (gates[i] == 'Z')
+      z |= 1ul << ((size+an_size)-i-1);
+  }
+
+  auto cond = [&](size_t ij) {
+    bool c = true;
+    for (size_t k = 0; (k < control.size()) and c; k++)
+      c = c and ((1ul << (size+an_size-control[k]-1)) & ij);
+    if (c) 
+      return std::make_pair(ij^x, pow(-1, par(ij & z)));
+    else 
+      return std::make_pair(ij, 1.0);
+  };
+
+  for (auto i = qbits.begin(); i != qbits.end(); ++i) {
+    auto [ii, fi] = cond(i.row());
+    auto [ij, fj] = cond(i.col());
+    
+    nqbits(ii, ij) = ((std::complex<double>)*i)*fi*fj;
+  }
+
+  qbits = nqbits;
+}
+*/
 
 void QSystem::measure(size_t qbit) {
   if (qbit >= size+an_size)
