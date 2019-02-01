@@ -30,6 +30,9 @@
 using size_t = long unsigned;
 using vec_cx = std::vector<std::complex<double>>;
 using vec_size = std::vector<size_t>;
+using vec_str = std::vector<std::string>;
+using vec_int = std::vector<int>;
+using vec_d = std::vector<double>;
 
 class Gate {
   public:
@@ -53,7 +56,7 @@ class Gate {
                     std::string gates,
                        vec_size control);
 
-    void ls();
+    std::string __str__();
 
     void save(std::string path);
 

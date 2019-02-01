@@ -115,11 +115,13 @@ void Gate::make_cgate(std::string name,
   cmap[name] = cm;
 }
 
-void Gate::ls() {
+std::string Gate::__str__() {
+  std::stringstream out;
   for (auto& gate: cmap) {
-    std::cout << gate.first << " - "
-              << log2(gate.second.n_rows)  << " qbits long"<< std::endl;
+    out << gate.first << " - "
+        << log2(gate.second.n_rows)  << " qbits long"<< std::endl;
   }
+  return out.str();
 }
 
 void Gate::save(std::string path){
