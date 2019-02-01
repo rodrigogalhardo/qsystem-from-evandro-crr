@@ -25,11 +25,8 @@
 #include "gate.h"
 #include <Python.h>
 
-enum Bit {none, zero, one};
-using vec_str = std::vector<std::string>;
-using vec_int = std::vector<int>;
-
 class QSystem {
+  enum Bit {none, zero, one};
   public:
     QSystem(size_t nqbits,
             size_t seed,
@@ -58,6 +55,7 @@ class QSystem {
     void            flip(char gate, size_t qbit, double p);
     void            amp_damping(size_t qbit, double p);
     void            dpl_channel(size_t qbit, double p);
+    void            sum(size_t qbit, vec_str kreaus, vec_d p);
 
     /* utility */
     std::string     __str__();

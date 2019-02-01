@@ -26,12 +26,13 @@
 %include <std_complex.i>
 
 %inline %{
-typedef long unsigned int size_t;
+using size_t = long unsigned;
 %}
 
 %template(vec_size) std::vector<size_t>;
 %template(vec_cx) std::vector<std::complex<double>>;
 %template(vec_int) std::vector<int>;
+%template(vec_str) std::vector<std::string>;
 
 %module qsystem
 %{

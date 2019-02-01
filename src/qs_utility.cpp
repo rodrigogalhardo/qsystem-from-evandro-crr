@@ -200,16 +200,17 @@ std::string QSystem::get_state() {
 
 sp_cx_mat QSystem::make_gate(sp_cx_mat gate, size_t qbit) {
   sp_cx_mat m;
+  size_t gate_size = log2(gate.n_rows);
   if (qbit == 0) {
-    size_t eyesize = 1ul << (size+an_size-1);
+    size_t eyesize = 1ul << (size+an_size-gate_size);
     m = kron(gate, eye<sp_cx_mat>(eyesize, eyesize));
-  } else if (qbit == size+an_size-1) {
-    size_t eyesize = 1ul << (size+an_size-1);
+  } else if (qbit == size+an_size-gate_size) {
+    size_t eyesize = 1ul << (size+an_size-gate_size);
     m = kron(eye<sp_cx_mat>(eyesize, eyesize), gate);
   } else {
     size_t eyesize = 1ul << qbit;
     m = kron(eye<sp_cx_mat>(eyesize, eyesize), gate);
-    eyesize = 1ul << (size+an_size-qbit-1);
+    eyesize = 1ul << (size+an_size-qbit-gate_size);
     m = kron(m, eye<sp_cx_mat>(eyesize, eyesize));
   }
   return m;
