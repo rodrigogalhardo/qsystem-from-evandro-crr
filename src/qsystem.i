@@ -32,6 +32,7 @@ using size_t = long unsigned;
 %template(vec_size) std::vector<size_t>;
 %template(vec_cx) std::vector<std::complex<double>>;
 %template(vec_int) std::vector<int>;
+%template(vec_d) std::vector<double>;
 %template(vec_str) std::vector<std::string>;
 
 %module qsystem
