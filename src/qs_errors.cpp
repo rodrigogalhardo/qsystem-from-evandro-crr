@@ -1,6 +1,7 @@
 /* MIT License
  * 
- * Copyright (c) 2019 Evandro Chagas Ribeiro da Rosa
+ * Copyright (c) 2019 Bruno Gouvêa Taketani <b.taketani@ufsc.br>
+ * Copyright (c) 2019 Evandro Chagas Ribeiro da Rosa <ev.crr97@gmail.com>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +26,7 @@
 
 using namespace arma;
 
+/******************************************************/
 void QSystem::flip(char gate, size_t qbit, double p) {
   if (not syncc) sync();
 
@@ -42,6 +44,7 @@ void QSystem::flip(char gate, size_t qbit, double p) {
   }
 }
 
+/******************************************************/
 void QSystem::amp_damping(size_t qbit, double p) {
   if (state == "pure")
     throw std::runtime_error{"\'state\' must be in \"mix\" to apply this channel."};
@@ -55,6 +58,7 @@ void QSystem::amp_damping(size_t qbit, double p) {
   qbits = E0*qbits*E0 + E1*qbits*E1;
 }
 
+/******************************************************/
 void QSystem::dpl_channel(size_t qbit, double p) {
   if (state == "pure")
     throw std::runtime_error{"\'state\' must be in \"mix\" to apply this channel."};
@@ -68,6 +72,7 @@ void QSystem::dpl_channel(size_t qbit, double p) {
   qbits = (1-p)*qbits+(p/3)*(X*qbits*X+Y*qbits*Y+Z*qbits*Z);
 }
 
+/******************************************************/
 void QSystem::sum(size_t qbit, vec_str kraus, vec_d p) {
   if (state == "pure")
     throw std::runtime_error{"\'state\' must be in \"mix\" to apply this channel."};

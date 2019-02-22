@@ -1,6 +1,7 @@
 /* MIT License
  * 
- * Copyright (c) 2019 Evandro Chagas Ribeiro da Rosa
+ * Copyright (c) 2019 Bruno Gouvêa Taketani <b.taketani@ufsc.br>
+ * Copyright (c) 2019 Evandro Chagas Ribeiro da Rosa <ev.crr97@gmail.com>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,8 +27,10 @@
 
 using namespace arma;
 
+/*********************************************************/
 Gate::Gate() {}
 
+/*********************************************************/
 Gate::Gate(std::string path) {
   mtar_t tar;
   mtar_header_t h;
@@ -49,19 +52,23 @@ Gate::Gate(std::string path) {
   mtar_close(&tar);
 }
 
+/*********************************************************/
 sp_cx_mat& Gate::get(char gate) {
   return map.at(gate);
 }
 
+/*********************************************************/
 sp_cx_mat& Gate::cget(std::string gate) {
   return cmap.at(gate);
 }
 
+/*********************************************************/
 void Gate::make_gate(char name, vec_cx matrix) {
   map[name] = sp_cx_mat{cx_mat{{{matrix[0], matrix[1]},
                                 {matrix[2], matrix[3]}}}};
 }
 
+/*********************************************************/
 void Gate::make_gate(std::string name,
                           size_t size, 
              std::vector<size_t> row,
@@ -77,6 +84,7 @@ void Gate::make_gate(std::string name,
   cmap[name] = m;
 }
 
+/*********************************************************/
 void Gate::make_cgate(std::string name,
                       std::string gates,
               std::vector<size_t> control) {
@@ -115,6 +123,7 @@ void Gate::make_cgate(std::string name,
   cmap[name] = cm;
 }
 
+/*********************************************************/
 std::string Gate::__str__() {
   std::stringstream out;
   for (auto& gate: cmap) {
@@ -124,6 +133,7 @@ std::string Gate::__str__() {
   return out.str();
 }
 
+/*********************************************************/
 void Gate::save(std::string path){
   mtar_t tar;
   mtar_open(&tar, path.c_str(), "w");

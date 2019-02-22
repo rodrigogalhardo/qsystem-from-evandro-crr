@@ -1,6 +1,7 @@
 /* MIT License
  * 
- * Copyright (c) 2019 Evandro Chagas Ribeiro da Rosa
+ * Copyright (c) 2019 Bruno Gouvêa Taketani <b.taketani@ufsc.br>
+ * Copyright (c) 2019 Evandro Chagas Ribeiro da Rosa <ev.crr97@gmail.com>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +27,29 @@
 #include <Python.h>
 
 class QSystem {
+
+  struct Op {
+    Op();
+    ~Op();
+    enum {
+      NONE,
+      GATE_1,
+      GATE_N,
+      CNOT,
+      CPHASE,
+      SWAP, 
+      QFT} tag;
+    union{
+      char        gate;
+      std::string gate_n;
+      cnot_pair   cnot;
+      cph_tuple   cphase;
+    };
+    size_t size;
+  };
+
   enum Bit {none, zero, one};
+
   public:
     QSystem(size_t nqbits,
             size_t seed,
@@ -39,23 +62,25 @@ class QSystem {
     ~QSystem();
     
     /* evolution */
-    void            evol(char gate, size_t qbit);
-    void            evol(char gate, size_t qbegin, size_t qend);
+    void            evol(char gate, qbit_id qbit);
+    void            evol(char gate, qbit_id qbegin, qbit_id qend);
     void            evol(std::string gates);
-//  void            ctrl(std::string gates, vec_size control);
-    void            cnot(size_t target, vec_size control);
-    void            evol(std::string u, size_t qbit);
+    void            evol(std::string u, qbit_id qbit);
+    void            cnot(qbit_id target, vec_qbit control);
+    void            cphase(cx phase, qbit_id target, vec_qbit control);
+    void            swap(qbit_id qbit_a, qbit_id qbit_b);
+    void            qft(qbit_id qbegin, qbit_id qend);
     
     /* measure */
-    void             measure(size_t qbit);
-    void             measure(size_t qbegin, size_t qend);
+    void             measure(qbit_id qbit);
+    void             measure(qbit_id qbegin, qbit_id qend);
     void             measure_all();
     
     /* error channel */
-    void            flip(char gate, size_t qbit, double p);
-    void            amp_damping(size_t qbit, double p);
-    void            dpl_channel(size_t qbit, double p);
-    void            sum(size_t qbit, vec_str kreaus, vec_d p);
+    void            flip(char gate, qbit_id qbit, double p);
+    void            amp_damping(qbit_id qbit, double p);
+    void            dpl_channel(qbit_id qbit, double p);
+    void            sum(qbit_id qbit, vec_str kreaus, vec_d p);
 
     /* utility */
     std::string     __str__();
@@ -74,30 +99,42 @@ class QSystem {
     /* ancilla */
     void            add_ancillas(size_t an_num);
     void            rm_ancillas();
-    void            an_evol(char gate, size_t qbit);
-    void            an_evol(char gate, size_t qbegin, size_t qend);
-    void            an_measure(size_t qbit);
-    void            an_measure(size_t qbegin, size_t qend);
+    void            an_evol(char gate, qbit_id qbit);
+    void            an_evol(char gate, qbit_id qbegin, qbit_id qend);
+    void            an_measure(qbit_id qbit);
+    void            an_measure(qbit_id qbegin, qbit_id qend);
     size_t          get_an_size();
     vec_int         get_an_bits();
 
   private:
     void            sync();
+    void            sync(qbit_id qbegin, qbit_id qend);
     void            clar();
-    arma::sp_cx_mat make_gate(arma::sp_cx_mat gate, size_t qbit);
+    cut_pair        cut(qbit_id &target, vec_qbit &control);
+    arma::sp_cx_mat get_gate(Op &op);
+    arma::sp_cx_mat make_gate(arma::sp_cx_mat gate, qbit_id qbit);
+    arma::sp_cx_mat make_cnot(qbit_id target,
+                             vec_qbit control,
+                               size_t size_n);
+    arma::sp_cx_mat make_cphase(cx phase,
+                           qbit_id target,
+                          vec_qbit control,
+                            size_t size_n);
+    arma::sp_cx_mat make_swap(size_t size_n);
+    arma::sp_cx_mat make_qft(size_t size_n);
+ 
 
     Gate&           gate;
     size_t          size;
     std::string     state;
-    char*           ops;
-    vec_str         mops;
+    Op*             ops;
     bool            syncc;
     arma::sp_cx_mat qbits;
     Bit*            bits;
 
     /* ancilla */
     size_t          an_size;
-    char*           an_ops;
+    Op*             an_ops;
     Bit*            an_bits;
 };
 

@@ -1,6 +1,7 @@
 /* MIT License
  * 
- * Copyright (c) 2019 Evandro Chagas Ribeiro da Rosa
+ * Copyright (c) 2019 Bruno Gouvêa Taketani <b.taketani@ufsc.br>
+ * Copyright (c) 2019 Evandro Chagas Ribeiro da Rosa <ev.crr97@gmail.com>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +28,9 @@
 
 using namespace arma;
 
+/******************************************************/
 QSystem::QSystem(size_t nqbits, size_t seed, Gate& gate, std::string state) :
-  gate{gate}, size{nqbits}, state{state}, ops{new char[size]}, syncc{true},
+  gate{gate}, size{nqbits}, state{state}, ops{new Op[size]}, syncc{true},
   qbits{1lu << size, state == "mix" ? 1lu << size : 1},
   bits{new Bit[size]()}, an_size{0}, an_ops{nullptr}, an_bits{nullptr}
 {
@@ -36,22 +38,22 @@ QSystem::QSystem(size_t nqbits, size_t seed, Gate& gate, std::string state) :
     throw std::invalid_argument{"Argument \'state\' must be \"pure\" or \"mix\", not \""
       + state + "\"."};
   qbits(0,0) = 1;
-  std::memset(ops, 'I', size*sizeof(char));
   std::srand(seed);
 }
 
+/******************************************************/
 QSystem::QSystem(std::string path, size_t seed, Gate& gate) :
   gate{gate}, syncc{true}, an_size{0}, an_ops{nullptr}, an_bits{nullptr}
 {
   qbits.load(path, arma_binary);
   size = log2(qbits.n_rows);
   state = qbits.n_cols > 1 ? "mix" : "pure";
-  ops = new char[size];
+  ops = new Op[size];
   bits = new Bit[size]();
-  std::memset(ops, 'I', size*sizeof(char));
   std::srand(seed);
 }
 
+/******************************************************/
 QSystem::~QSystem() {
   delete[] ops;
   delete[] bits;
@@ -59,6 +61,13 @@ QSystem::~QSystem() {
   if (an_bits) delete[] an_bits;
 }
 
+/******************************************************/
+QSystem::Op::Op() : tag{NONE}, size{1} {}
+
+/******************************************************/
+QSystem::Op::~Op() {}
+
+/******************************************************/
 std::string QSystem::__str__() {
   auto to_bits = [&](size_t i) {
     std::string sbits{'|'};
@@ -103,10 +112,12 @@ std::string QSystem::__str__() {
   return out.str();
 }
 
+/******************************************************/
 size_t QSystem::get_size() {
   return size;
 }
 
+/******************************************************/
 std::vector<int> QSystem::get_bits() {
   std::vector<int> vec;
   for (size_t i = 0; i < size; i++)
@@ -114,10 +125,12 @@ std::vector<int> QSystem::get_bits() {
   return vec;
 }
 
+/******************************************************/
 size_t QSystem::get_an_size() {
   return an_size;
 }
 
+/******************************************************/
 std::vector<int> QSystem::get_an_bits() {
   std::vector<int> vec;
   for (size_t i = 0; i < an_size; i++)
@@ -125,6 +138,7 @@ std::vector<int> QSystem::get_an_bits() {
   return vec;
 }
 
+/******************************************************/
 PyObject* QSystem::get_qbits() {
   if (not syncc) sync();
   qbits.sync();
@@ -157,6 +171,7 @@ PyObject* QSystem::get_qbits() {
   return result;
 }
 
+/******************************************************/
 void QSystem::set_qbits(vec_size row_ind,
                         vec_size col_ptr,
                           vec_cx values,
@@ -174,6 +189,7 @@ void QSystem::set_qbits(vec_size row_ind,
   size = nqbits;
 }
 
+/******************************************************/
 void QSystem::change_to(std::string state) {
   if (state != "mix" and state != "pure") 
     throw std::invalid_argument{"Argument \'state\' must be \"pure\" or \"mix\", not \""
@@ -194,30 +210,57 @@ void QSystem::change_to(std::string state) {
   this->state = state;
 }
 
+/******************************************************/
 std::string QSystem::get_state() {
   return state;
 }
 
-sp_cx_mat QSystem::make_gate(sp_cx_mat gate, size_t qbit) {
-  sp_cx_mat m;
-  size_t gate_size = log2(gate.n_rows);
-  if (qbit == 0) {
-    size_t eyesize = 1ul << (size+an_size-gate_size);
-    m = kron(gate, eye<sp_cx_mat>(eyesize, eyesize));
-  } else if (qbit == size+an_size-gate_size) {
-    size_t eyesize = 1ul << (size+an_size-gate_size);
-    m = kron(eye<sp_cx_mat>(eyesize, eyesize), gate);
-  } else {
-    size_t eyesize = 1ul << qbit;
-    m = kron(eye<sp_cx_mat>(eyesize, eyesize), gate);
-    eyesize = 1ul << (size+an_size-qbit-gate_size);
-    m = kron(m, eye<sp_cx_mat>(eyesize, eyesize));
-  }
-  return m;
-}
-
+/******************************************************/
 void QSystem::save(std::string path) {
   if (not syncc) sync();
   qbits.save(path, arma_binary);
+}
+
+/******************************************************/
+arma::sp_cx_mat QSystem::get_gate(Op &op) {
+    switch (op.tag) {
+    case Op::NONE:
+      return gate.get('I');
+    case Op::GATE_1:
+      return gate.get(op.gate);
+    case Op::GATE_N:
+      return gate.cget(op.gate_n);
+    case Op::CNOT:
+      return make_cnot(op.cnot.first, op.cnot.second, op.size);
+    case Op::CPHASE:
+      return make_cphase(std::get<0>(op.cphase),
+                         std::get<1>(op.cphase),
+                         std::get<2>(op.cphase),
+                         op.size);
+    case Op::SWAP:
+      return make_swap(op.size);
+    default:
+      return make_qft(op.size);
+    }
+}
+
+/******************************************************/
+cut_pair QSystem::cut(qbit_id &target, vec_qbit &control) {
+  qbit_id maxq = std::max(target, *std::max_element(control.begin(), control.end()));
+  qbit_id minq = std::min(target, *std::min_element(control.begin(), control.end()));
+  size_t size_n = maxq - minq+1;
+  size_t siftl = size+an_size-maxq;
+  size_t mask = (1ul << size_n) -1;
+  for (auto &i : control) 
+    i = (i >> siftl) & mask;
+  for (size_t i = minq; i <= maxq; i++) {
+    if ((i < size and ops[i].tag != Op::NONE) or
+        (i >= size and an_ops[size-i].tag != Op::NONE)) {
+        sync();
+        break;
+    }
+  }
+  target = (target >> siftl) & mask;
+  return std::make_pair(size_n, minq);
 }
 

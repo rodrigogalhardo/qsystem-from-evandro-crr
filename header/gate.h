@@ -1,6 +1,7 @@
 /* MIT License
  * 
- * Copyright (c) 2019 Evandro Chagas Ribeiro da Rosa
+ * Copyright (c) 2019 Bruno Gouvêa Taketani <b.taketani@ufsc.br>
+ * Copyright (c) 2019 Evandro Chagas Ribeiro da Rosa <ev.crr97@gmail.com>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,17 +23,9 @@
  */                                                                               
 
 #pragma once
+#include "using.h"
 #include <map>
 #include <armadillo>
-#include <vector>
-#include <string>
-
-using size_t = long unsigned;
-using vec_cx = std::vector<std::complex<double>>;
-using vec_size = std::vector<size_t>;
-using vec_str = std::vector<std::string>;
-using vec_int = std::vector<int>;
-using vec_d = std::vector<double>;
 
 class Gate {
   public:

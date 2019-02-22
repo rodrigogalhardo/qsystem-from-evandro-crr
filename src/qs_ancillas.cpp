@@ -1,6 +1,7 @@
 /* MIT License
  * 
- * Copyright (c) 2019 Evandro Chagas Ribeiro da Rosa
+ * Copyright (c) 2019 Bruno Gouvêa Taketani <b.taketani@ufsc.br>
+ * Copyright (c) 2019 Evandro Chagas Ribeiro da Rosa <ev.crr97@gmail.com>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,22 +26,22 @@
 
 using namespace arma;
 
+/******************************************************/
 void QSystem::add_ancillas(size_t an_num) {
   if (an_num == 0) 
     throw std::invalid_argument{"Argument \'an_num\' must be greater than 0"};
   if (not syncc) sync();
 
   an_size = an_num;
-  an_ops = new char[an_size];
+  an_ops = new Op[an_size];
   an_bits = new Bit[an_size]();
-
-  std::memset(an_ops, 'I', an_size*sizeof(char));
 
   sp_cx_mat an_qbits{1ul << an_size, state == "mix" ? 1lu << an_size : 1};
   an_qbits(0,0) = 1;
   qbits = kron(qbits, an_qbits);
 }
 
+/******************************************************/
 void QSystem::rm_ancillas() {
   if (an_size == 0) 
     throw std::logic_error{"There are no ancillas on the system"};
@@ -83,22 +84,22 @@ void QSystem::rm_ancillas() {
   an_bits = nullptr;
 }
 
+/******************************************************/
 void QSystem::an_evol(char gate, size_t qbit) {
-  if (an_ops[qbit] != 'I') sync();
+  if (an_ops[qbit].tag != Op::NONE) sync();
   
-  an_ops[qbit] = gate;
+  an_ops[qbit].tag = Op::GATE_1;
+  an_ops[qbit].gate = gate;
   syncc = false;
 }
 
+/******************************************************/
 void QSystem::an_evol(char gate, size_t qbegin, size_t qend) {
-  for (size_t qbit = qbegin; qbit < qend; qbit++){
-    if (an_ops[qbit] != 'I') sync();
-    
-    an_ops[qbit] = gate;
-  }
-  syncc = false;
+  for (size_t qbit = qbegin; qbit < qend; qbit++)
+    an_evol(gate, qbit); 
 }
 
+/******************************************************/
 void QSystem::an_measure(size_t qbit) {
   if (qbit >= an_size)
     throw std::out_of_range("Argument 'qbit' must be in range  [0, "
@@ -107,6 +108,7 @@ void QSystem::an_measure(size_t qbit) {
   measure(size+qbit);
 }
 
+/******************************************************/
 void QSystem::an_measure(size_t qbegin, size_t qend) {
   for (size_t qbit = qbegin; qbit < qend; qbit++) 
     measure(size+qbit);
