@@ -25,26 +25,21 @@
 #pragma once
 #include "gate.h"
 #include <Python.h>
+#include <variant>
 
 class QSystem {
 
   struct Op {
     Op();
     ~Op();
-    enum {
-      NONE,
-      GATE_1,
-      GATE_N,
-      CNOT,
-      CPHASE,
-      SWAP, 
-      QFT} tag;
-    union{
-      char        gate;
-      std::string gate_n;
-      cnot_pair   cnot;
-      cph_tuple   cphase;
-    };
+    enum {NONE, GATE_1,
+          GATE_N, CNOT,
+          CPHASE, SWAP, 
+          QFT} tag;
+    std::variant<char,
+                 std::string,
+                 cnot_pair,
+                 cph_tuple> data;
     size_t size;
   };
 
@@ -62,25 +57,25 @@ class QSystem {
     ~QSystem();
     
     /* evolution */
-    void            evol(char gate, qbit_id qbit);
-    void            evol(char gate, qbit_id qbegin, qbit_id qend);
+    void            evol(char gate, size_t qbit);
+    void            evol(char gate, size_t qbegin, size_t qend);
     void            evol(std::string gates);
-    void            evol(std::string u, qbit_id qbit);
-    void            cnot(qbit_id target, vec_qbit control);
-    void            cphase(cx phase, qbit_id target, vec_qbit control);
-    void            swap(qbit_id qbit_a, qbit_id qbit_b);
-    void            qft(qbit_id qbegin, qbit_id qend);
+    void            evol(std::string u, size_t qbit);
+    void            cnot(size_t target, vec_size control);
+    void            cphase(cx phase, size_t target, vec_size control);
+    void            swap(size_t qbit_a, size_t qbit_b);
+    void            qft(size_t qbegin, size_t qend);
     
     /* measure */
-    void             measure(qbit_id qbit);
-    void             measure(qbit_id qbegin, qbit_id qend);
+    void             measure(size_t qbit);
+    void             measure(size_t qbegin, size_t qend);
     void             measure_all();
     
     /* error channel */
-    void            flip(char gate, qbit_id qbit, double p);
-    void            amp_damping(qbit_id qbit, double p);
-    void            dpl_channel(qbit_id qbit, double p);
-    void            sum(qbit_id qbit, vec_str kreaus, vec_d p);
+    void            flip(char gate, size_t qbit, double p);
+    void            amp_damping(size_t qbit, double p);
+    void            dpl_channel(size_t qbit, double p);
+    void            sum(size_t qbit, vec_str kreaus, vec_d p);
 
     /* utility */
     std::string     __str__();
@@ -99,26 +94,26 @@ class QSystem {
     /* ancilla */
     void            add_ancillas(size_t an_num);
     void            rm_ancillas();
-    void            an_evol(char gate, qbit_id qbit);
-    void            an_evol(char gate, qbit_id qbegin, qbit_id qend);
-    void            an_measure(qbit_id qbit);
-    void            an_measure(qbit_id qbegin, qbit_id qend);
+    void            an_evol(char gate, size_t qbit);
+    void            an_evol(char gate, size_t qbegin, size_t qend);
+    void            an_measure(size_t qbit);
+    void            an_measure(size_t qbegin, size_t qend);
     size_t          get_an_size();
     vec_int         get_an_bits();
 
   private:
     void            sync();
-    void            sync(qbit_id qbegin, qbit_id qend);
+    void            sync(size_t qbegin, size_t qend);
     void            clar();
-    cut_pair        cut(qbit_id &target, vec_qbit &control);
+    cut_pair        cut(size_t &target, vec_size &control);
     arma::sp_cx_mat get_gate(Op &op);
-    arma::sp_cx_mat make_gate(arma::sp_cx_mat gate, qbit_id qbit);
-    arma::sp_cx_mat make_cnot(qbit_id target,
-                             vec_qbit control,
-                               size_t size_n);
+    arma::sp_cx_mat make_gate(arma::sp_cx_mat gate, size_t qbit);
+    arma::sp_cx_mat make_cnot(size_t target,
+                            vec_size control,
+                              size_t size_n);
     arma::sp_cx_mat make_cphase(cx phase,
-                           qbit_id target,
-                          vec_qbit control,
+                            size_t target,
+                          vec_size control,
                             size_t size_n);
     arma::sp_cx_mat make_swap(size_t size_n);
     arma::sp_cx_mat make_qft(size_t size_n);

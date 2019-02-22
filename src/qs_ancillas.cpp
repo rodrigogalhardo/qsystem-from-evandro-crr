@@ -89,7 +89,7 @@ void QSystem::an_evol(char gate, size_t qbit) {
   if (an_ops[qbit].tag != Op::NONE) sync();
   
   an_ops[qbit].tag = Op::GATE_1;
-  an_ops[qbit].gate = gate;
+  an_ops[qbit].data = gate;
   syncc = false;
 }
 

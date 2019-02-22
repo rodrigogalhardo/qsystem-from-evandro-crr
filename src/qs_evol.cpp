@@ -32,7 +32,7 @@ void QSystem::evol(char gate, size_t qbit) {
   if (ops[qbit].tag != Op::NONE) sync();
 
   ops[qbit].tag = Op::GATE_1;
-  ops[qbit].gate = gate;
+  ops[qbit].data = gate;
   syncc = false;
 }
 
@@ -62,44 +62,44 @@ void QSystem::evol(std::string u, size_t qbit) {
   sync(qbit, qbit+size_n);
 
   ops[qbit].tag = Op::GATE_N;
-  ops[qbit].gate_n = u;
+  ops[qbit].data = u;
   ops[qbit].size = size_n;
   
   syncc = false;
 }
 
 /******************************************************/
-void QSystem::cnot(size_t target, vec_qbit control) {
+void QSystem::cnot(size_t target, vec_size control) {
   auto [size_n, minq] = cut(target, control);
 
   sync(minq, minq+size_n);
 
   ops[minq].tag = Op::CNOT;
-  ops[minq].cnot = std::make_pair(target, control);
+  ops[minq].data = cnot_pair{target, control};
   ops[minq].size = size_n;
 
   syncc = false;
 }
 
 /******************************************************/
-void QSystem::cphase(cx phase, qbit_id target, vec_qbit control) {
+void QSystem::cphase(cx phase, size_t target, vec_size control) {
   auto [size_n, minq] = cut(target, control);
 
   sync(minq, minq+size_n);
 
   ops[minq].tag = Op::CPHASE;
-  ops[minq].cphase = std::make_tuple(phase, target, control);
+  ops[minq].data = cph_tuple{phase, target, control};
   ops[minq].size = size_n;
 
   syncc = false;
 }
 
 /******************************************************/
-void QSystem::swap(qbit_id qbit_a, qbit_id qbit_b) {
+void QSystem::swap(size_t qbit_a, size_t qbit_b) {
   if (qbit_a == qbit_b) return;
 
-  qbit_id a = qbit_a < qbit_b? qbit_a :  qbit_b;
-  qbit_id b = qbit_a > qbit_b? qbit_a :  qbit_b;
+  size_t a = qbit_a < qbit_b? qbit_a :  qbit_b;
+  size_t b = qbit_a > qbit_b? qbit_a :  qbit_b;
 
   size_t size_n = b-a+1;
 
@@ -112,7 +112,7 @@ void QSystem::swap(qbit_id qbit_a, qbit_id qbit_b) {
 }
 
 /******************************************************/
-void QSystem::qft(qbit_id qbegin, qbit_id qend) {
+void QSystem::qft(size_t qbegin, size_t qend) {
   sync(qbegin, qend);
 
   ops[qbegin].tag = Op::QFT;
@@ -147,7 +147,7 @@ void QSystem::sync() {
 }
 
 /******************************************************/
-void QSystem::sync(qbit_id qbegin, qbit_id qend) {
+void QSystem::sync(size_t qbegin, size_t qend) {
   for (size_t i = qbegin; i < qend; i++) {
     if ((i < size and ops[i].tag != Op::NONE) or
         (i >= size and an_ops[size-i].tag != Op::NONE)) {

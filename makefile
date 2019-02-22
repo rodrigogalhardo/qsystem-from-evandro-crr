@@ -1,5 +1,5 @@
 OBJ = src/gate.o src/microtar.o src/qs_ancillas.o src/qs_errors.o
-OBJ += src/qs_make.cpp src/qs_evol.o src/qs_measure.cpp
+OBJ += src/qs_make.o src/qs_evol.o src/qs_measure.o
 OBJ += src/qs_utility.o src/qsystem.o
 HEADER = $(wildcard header/*.h)
 

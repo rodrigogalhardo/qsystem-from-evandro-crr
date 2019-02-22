@@ -28,14 +28,12 @@
 #include <complex>
 #include <utility>
 using size_t = long unsigned;
-using qbit_id = size_t;
 using cx = std::complex<double>;
 using vec_cx = std::vector<std::complex<double>>;
-using vec_qbit = std::vector<size_t>;
 using vec_size = std::vector<size_t>;
 using vec_str = std::vector<std::string>;
 using vec_int = std::vector<int>;
 using vec_d = std::vector<double>;
-using cnot_pair = std::pair<qbit_id, vec_qbit>;
-using cph_tuple = std::tuple<cx, qbit_id, vec_qbit>;
-using cut_pair = std::pair<size_t, qbit_id>;
+using cnot_pair = std::pair<size_t, vec_size>;
+using cph_tuple = std::tuple<cx, size_t, vec_size>;
+using cut_pair = std::pair<size_t, size_t>;

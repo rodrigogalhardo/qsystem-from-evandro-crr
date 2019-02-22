@@ -48,7 +48,7 @@ sp_cx_mat QSystem::make_gate(sp_cx_mat gate, size_t qbit) {
 
 /*********************************************************/
 sp_cx_mat QSystem::make_cnot(size_t target,
-                           vec_qbit control,
+                           vec_size control,
                              size_t size_n) {
   sp_cx_mat cnotm{1ul << size_n, 1ul << size_n};
 
@@ -69,8 +69,8 @@ sp_cx_mat QSystem::make_cnot(size_t target,
 
 /******************************************************/
 sp_cx_mat QSystem::make_cphase(cx phase,
-                          qbit_id target,
-                         vec_qbit control,
+                           size_t target,
+                         vec_size control,
                            size_t size_n) {
   sp_cx_mat cphasem{1ul << size_n, 1ul << size_n};
 
@@ -99,9 +99,10 @@ sp_cx_mat QSystem::make_swap(size_t size_n) {
 
   for (size_t i = 0; i < (1ul << (size_n-1)); i++) {
     if (i%2 == 0) 
-      swapm(i ^ 1ul, i) = 1;
+      swapm(i ^ 1ul, i | (1ul << (size_n-1))) = 1;
     else 
       swapm(i | (1ul << (size_n-1)), i | (1ul << (size_n-1))) = 1;
+
   }
 
   return swapm;

@@ -227,15 +227,17 @@ arma::sp_cx_mat QSystem::get_gate(Op &op) {
     case Op::NONE:
       return gate.get('I');
     case Op::GATE_1:
-      return gate.get(op.gate);
+      return gate.get(std::get<char>(op.data));
     case Op::GATE_N:
-      return gate.cget(op.gate_n);
+      return gate.cget(std::get<std::string>(op.data));
     case Op::CNOT:
-      return make_cnot(op.cnot.first, op.cnot.second, op.size);
+      return make_cnot(std::get<cnot_pair>(op.data).first,
+                       std::get<cnot_pair>(op.data).second,
+                       op.size);
     case Op::CPHASE:
-      return make_cphase(std::get<0>(op.cphase),
-                         std::get<1>(op.cphase),
-                         std::get<2>(op.cphase),
+      return make_cphase(std::get<0>(std::get<cph_tuple>(op.data)),
+                         std::get<1>(std::get<cph_tuple>(op.data)),
+                         std::get<2>(std::get<cph_tuple>(op.data)),
                          op.size);
     case Op::SWAP:
       return make_swap(op.size);
@@ -245,22 +247,17 @@ arma::sp_cx_mat QSystem::get_gate(Op &op) {
 }
 
 /******************************************************/
-cut_pair QSystem::cut(qbit_id &target, vec_qbit &control) {
-  qbit_id maxq = std::max(target, *std::max_element(control.begin(), control.end()));
-  qbit_id minq = std::min(target, *std::min_element(control.begin(), control.end()));
-  size_t size_n = maxq - minq+1;
-  size_t siftl = size+an_size-maxq;
-  size_t mask = (1ul << size_n) -1;
+cut_pair QSystem::cut(size_t &target, vec_size &control) {
+  size_t maxq = std::max(target,
+                         *std::max_element(control.begin(),
+                                           control.end()));
+  size_t minq = std::min(target,
+                         *std::min_element(control.begin(),
+                                           control.end()));
+  size_t size_n = maxq-minq+1;
   for (auto &i : control) 
-    i = (i >> siftl) & mask;
-  for (size_t i = minq; i <= maxq; i++) {
-    if ((i < size and ops[i].tag != Op::NONE) or
-        (i >= size and an_ops[size-i].tag != Op::NONE)) {
-        sync();
-        break;
-    }
-  }
-  target = (target >> siftl) & mask;
+    i -= minq;
+  target -= minq;
   return std::make_pair(size_n, minq);
 }
 
