@@ -261,3 +261,20 @@ cut_pair QSystem::cut(size_t &target, vec_size &control) {
   return std::make_pair(size_n, minq);
 }
 
+/******************************************************/
+void QSystem::fill(Op::Tag tag, size_t qbit, size_t size_n) {
+  sync(qbit, qbit+size_n);
+
+  ops[qbit].tag = tag;
+  ops[qbit].size = size_n;
+ 
+  for (size_t i = qbit+1; (i < qbit+size_n) and (i < size); i++)
+    ops[i].tag = tag;
+  if (qbit+size_n > size) {
+    for (size_t i = 0; i < qbit+size_n-size; i++ )
+      an_ops[i].tag = tag;
+  }
+
+  syncc = false;
+}
+

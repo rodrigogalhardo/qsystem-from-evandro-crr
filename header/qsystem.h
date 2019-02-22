@@ -32,10 +32,10 @@ class QSystem {
   struct Op {
     Op();
     ~Op();
-    enum {NONE, GATE_1,
-          GATE_N, CNOT,
-          CPHASE, SWAP, 
-          QFT} tag;
+    enum Tag {NONE, GATE_1,
+              GATE_N, CNOT,
+              CPHASE, SWAP, 
+              QFT} tag;
     std::variant<char,
                  std::string,
                  cnot_pair,
@@ -105,8 +105,6 @@ class QSystem {
     void            sync();
     void            sync(size_t qbegin, size_t qend);
     void            clar();
-    cut_pair        cut(size_t &target, vec_size &control);
-    arma::sp_cx_mat get_gate(Op &op);
     arma::sp_cx_mat make_gate(arma::sp_cx_mat gate, size_t qbit);
     arma::sp_cx_mat make_cnot(size_t target,
                             vec_size control,
@@ -117,6 +115,9 @@ class QSystem {
                             size_t size_n);
     arma::sp_cx_mat make_swap(size_t size_n);
     arma::sp_cx_mat make_qft(size_t size_n);
+    arma::sp_cx_mat get_gate(Op &op);
+    cut_pair        cut(size_t &target, vec_size &control);
+    void            fill(Op::Tag tag, size_t qbit, size_t size_n);
  
 
     Gate&           gate;

@@ -58,67 +58,35 @@ void QSystem::evol(std::string gates) {
 /******************************************************/
 void QSystem::evol(std::string u, size_t qbit) {
   auto size_n = log2(gate.cget(u).n_rows);
-
-  sync(qbit, qbit+size_n);
-
-  ops[qbit].tag = Op::GATE_N;
+  fill(Op::GATE_N, qbit, size_n);
   ops[qbit].data = u;
-  ops[qbit].size = size_n;
-  
-  syncc = false;
 }
 
 /******************************************************/
 void QSystem::cnot(size_t target, vec_size control) {
   auto [size_n, minq] = cut(target, control);
-
-  sync(minq, minq+size_n);
-
-  ops[minq].tag = Op::CNOT;
+  fill(Op::CNOT, minq, size_n);
   ops[minq].data = cnot_pair{target, control};
-  ops[minq].size = size_n;
-
-  syncc = false;
 }
 
 /******************************************************/
 void QSystem::cphase(cx phase, size_t target, vec_size control) {
   auto [size_n, minq] = cut(target, control);
-
-  sync(minq, minq+size_n);
-
-  ops[minq].tag = Op::CPHASE;
+  fill(Op::CPHASE, minq, size_n);
   ops[minq].data = cph_tuple{phase, target, control};
-  ops[minq].size = size_n;
-
-  syncc = false;
 }
 
 /******************************************************/
 void QSystem::swap(size_t qbit_a, size_t qbit_b) {
   if (qbit_a == qbit_b) return;
-
   size_t a = qbit_a < qbit_b? qbit_a :  qbit_b;
   size_t b = qbit_a > qbit_b? qbit_a :  qbit_b;
-
-  size_t size_n = b-a+1;
-
-  sync(a, a+size_n);
- 
-  ops[a].tag = Op::SWAP;
-  ops[a].size = size_n;
-
-  syncc = false;
+  fill(Op::SWAP, a, b-a+1);
 }
 
 /******************************************************/
 void QSystem::qft(size_t qbegin, size_t qend) {
-  sync(qbegin, qend);
-
-  ops[qbegin].tag = Op::QFT;
-  ops[qbegin].size = qend-qbegin;
-
-  syncc = false;
+  fill(Op::QFT, qbegin, qend-qbegin);
 }
 
 /******************************************************/
