@@ -28,52 +28,44 @@
 using namespace arma;
 
 /******************************************************/
-void QSystem::evol(char gate, size_t qbit) {
-  if (ops[qbit].tag != Op::NONE) sync();
+void QSystem::evol(std::string gate,
+                         size_t qbit, 
+                         size_t count,
+                           bool inver) {
+  if (gate.size() > 1) {
+    auto size_n = log2(gates.mget(gate).n_rows);
+    sync(qbit, qbit+count*size_n);
+    for (size_t i = 0; i < count; i++) {
+      size_t index = qbit+i*gate.size();
+      fill(Gate_aux::GATE_N, index, size_n);
+      ops(index).data = gate;
+      ops(index).inver = inver;
 
-  ops[qbit].tag = Op::GATE_1;
-  ops[qbit].data = gate;
-  syncc = false;
+    }
+  } else {
+    sync(qbit, qbit+count);
+    for (size_t i = 0; i < count; i++) {
+      ops(qbit+i).tag = Gate_aux::GATE_1;
+      ops(qbit+i).data = gate[0];
+      ops(qbit+i).inver = inver;
+    }
+  }
+
+  _sync = false;
 }
 
 /******************************************************/
-void QSystem::evol(char gate, size_t qbegin, size_t qend) {
-  for (size_t i = qbegin; i < qend; i++) 
-    evol(gate, i);
-}
-
-/******************************************************/
-void QSystem::evol(std::string gates) {
-  if (gates.size() != size+an_size) 
-    throw std::length_error{"String 'gates' must be " +
-        std::to_string(size+an_size) + " characters long"};
-  
-  for (size_t i = 0; i < size; i++) 
-    evol(gates[i], i);
-
-  for (size_t i = 0; i < an_size; i++) 
-    an_evol(gates[size+i], i);
-}
-
-/******************************************************/
-void QSystem::evol(std::string u, size_t qbit) {
-  auto size_n = log2(gate.cget(u).n_rows);
-  fill(Op::GATE_N, qbit, size_n);
-  ops[qbit].data = u;
-}
-
-/******************************************************/
-void QSystem::cnot(size_t target, vec_size control) {
+void QSystem::cnot(size_t target, vec_size_t control) {
   auto [size_n, minq] = cut(target, control);
-  fill(Op::CNOT, minq, size_n);
-  ops[minq].data = cnot_pair{target, control};
+  fill(Gate_aux::CNOT, minq, size_n);
+  ops(minq).data = cnot_pair{target, control};
 }
 
 /******************************************************/
-void QSystem::cphase(cx phase, size_t target, vec_size control) {
+void QSystem::cphase(complex phase, size_t target, vec_size_t control) {
   auto [size_n, minq] = cut(target, control);
-  fill(Op::CPHASE, minq, size_n);
-  ops[minq].data = cph_tuple{phase, target, control};
+  fill(Gate_aux::CPHASE, minq, size_n);
+  ops(minq).data = cph_tuple{phase, target, control};
 }
 
 /******************************************************/
@@ -81,44 +73,46 @@ void QSystem::swap(size_t qbit_a, size_t qbit_b) {
   if (qbit_a == qbit_b) return;
   size_t a = qbit_a < qbit_b? qbit_a :  qbit_b;
   size_t b = qbit_a > qbit_b? qbit_a :  qbit_b;
-  fill(Op::SWAP, a, b-a+1);
+  fill(Gate_aux::SWAP, a, b-a+1);
 }
 
 /******************************************************/
-void QSystem::qft(size_t qbegin, size_t qend) {
-  fill(Op::QFT, qbegin, qend-qbegin);
+void QSystem::qft(size_t qbegin, size_t qend, bool inver) {
+  fill(Gate_aux::QFT, qbegin, qend-qbegin);
+  ops(qbegin).inver = inver;
 }
 
 /******************************************************/
 void QSystem::sync() {
+  
+  if (_sync) return;
+
   sp_cx_mat evolm;
   
-  evolm = get_gate(ops[0]);
-  size_t i = ops[0].size;
-  
-  for (; i < size; i += ops[i].size) 
-    evolm = kron(evolm, get_gate(ops[i]));
+  evolm = get_gate(ops(0));
 
-  for (i -= size; i < an_size; i += an_ops[i].size) 
-    evolm = kron(evolm, get_gate(an_ops[i]));
+  for (size_t i = ops(0).size; i < size(); i += ops(i).size) 
+    evolm = kron(evolm, get_gate(ops(i)));
 
-  if (state == "pure")
+  if (_state == "pure")
     qbits = evolm*qbits;
-  else if (state == "mix")
+  else if (_state == "mix")
     qbits = evolm*qbits*evolm.t();
 
-  ops = new (ops) Op[size];
-  if (an_ops)
-    an_ops = new (an_ops) Op[an_size];
+  delete[] _ops;
+  _ops = new Gate_aux[_size];
+  if (an_ops) {
+    delete[] an_ops;
+    an_ops = new Gate_aux[an_size];
+  }
 
-  syncc = true;
+  _sync = true;
 }
 
 /******************************************************/
 void QSystem::sync(size_t qbegin, size_t qend) {
   for (size_t i = qbegin; i < qend; i++) {
-    if ((i < size and ops[i].tag != Op::NONE) or
-        (i >= size and an_ops[size-i].tag != Op::NONE)) {
+    if (ops(i).busy()) {
       sync();
       break;
     } 
@@ -127,10 +121,13 @@ void QSystem::sync(size_t qbegin, size_t qend) {
 
 /******************************************************/
 void QSystem::clar() {
-  ops = new (ops) Op[size];
-  if (an_ops)
-    an_ops = new (an_ops) Op[an_size];
+  delete _ops;
+  _ops = new Gate_aux[_size];
+  if (an_ops) {
+    delete an_ops;
+    an_ops = new Gate_aux[an_size];
+  }
 
-  syncc = true;
+  _sync = true;
 }
 

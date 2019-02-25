@@ -29,53 +29,58 @@
 using namespace arma;
 
 /******************************************************/
-QSystem::QSystem(size_t nqbits, size_t seed, Gate& gate, std::string state) :
-  gate{gate}, size{nqbits}, state{state}, ops{new Op[size]}, syncc{true},
-  qbits{1lu << size, state == "mix" ? 1lu << size : 1},
-  bits{new Bit[size]()}, an_size{0}, an_ops{nullptr}, an_bits{nullptr}
+QSystem::QSystem(size_t nqbits,
+                  Gates& gates,
+            std::string state,
+                 size_t seed) :
+  gates{gates},
+  _size{nqbits},
+  _state{state},
+  _ops{new Gate_aux[nqbits]},
+  _sync{true},
+  qbits{1lu << nqbits, state == "mix" ? 1lu << nqbits : 1},
+  _bits{new Bit[nqbits]()}, 
+  an_size{0},
+  an_ops{nullptr},
+  an_bits{nullptr}
 {
   if (state != "mix" and state != "pure") 
-    throw std::invalid_argument{"Argument \'state\' must be \"pure\" or \"mix\", not \""
-      + state + "\"."};
+    throw std::invalid_argument{std::string{"Argument \'state\' must be"}
+                              + std::string{"\"pure\" or \"mix\", not \""}
+                              + state + "\"."};
   qbits(0,0) = 1;
   std::srand(seed);
 }
 
-/******************************************************/
-QSystem::QSystem(std::string path, size_t seed, Gate& gate) :
-  gate{gate}, syncc{true}, an_size{0}, an_ops{nullptr}, an_bits{nullptr}
-{
-  qbits.load(path, arma_binary);
-  size = log2(qbits.n_rows);
-  state = qbits.n_cols > 1 ? "mix" : "pure";
-  ops = new Op[size];
-  bits = new Bit[size]();
-  std::srand(seed);
-}
 
 /******************************************************/
 QSystem::~QSystem() {
-  delete[] ops;
-  delete[] bits;
+  delete[] _ops;
+  delete[] _bits;
   if (an_ops) delete[] an_ops;
   if (an_bits) delete[] an_bits;
 }
 
 /******************************************************/
-QSystem::Op::Op() : tag{NONE}, size{1} {}
+QSystem::Gate_aux::Gate_aux() : tag{GATE_1}, data{'I'}, size{1}, inver{false} {}
 
 /******************************************************/
-QSystem::Op::~Op() {}
+QSystem::Gate_aux::~Gate_aux() {}
+
+/******************************************************/
+bool QSystem::Gate_aux::busy() {
+  return not(tag == GATE_1 and std::get<char>(data) == 'I');
+}
 
 /******************************************************/
 std::string QSystem::__str__() {
   auto to_bits = [&](size_t i) {
     std::string sbits{'|'};
-    for (size_t j = 0; j < size; j++)
-      sbits += i & 1ul << (size+an_size-j-1)? '1' : '0';
+    for (size_t j = 0; j < _size; j++)
+      sbits += i & 1ul << (size()-j-1)? '1' : '0';
     sbits += an_size == 0? ">" : ">|";
-    for (size_t j = size; j < size+an_size; j++)
-      sbits += i & 1ul << (size+an_size-j-1)? '1' : '0';
+    for (size_t j = _size; j < size(); j++)
+      sbits += i & 1ul << (size()-j-1)? '1' : '0';
     sbits += an_size == 0? "" : ">";
     return sbits;    
   };
@@ -95,14 +100,14 @@ std::string QSystem::__str__() {
     return ss.str();
   };
 
-  if (not syncc) sync();
+  sync();
   std::stringstream out;
-  if (state == "pure") {
+  if (state() == "pure") {
     for (auto i = qbits.begin(); i != qbits.end(); ++i) {
       if (abs((cx_double)*i) < 1e-14) continue; 
       out << cx_to_str(*i) << to_bits(i.row()) << '\n';
     }
-  } else if (state == "mix") {
+  } else if (state() == "mix") {
     for (auto i = qbits.begin(); i != qbits.end(); ++i) {
       auto aux = cx_to_str(*i);
       out << "(" << i.row() << ", " << i.col() << ")    " <<
@@ -113,26 +118,15 @@ std::string QSystem::__str__() {
 }
 
 /******************************************************/
-size_t QSystem::get_size() {
-  return size;
+size_t QSystem::size() {
+  return _size+an_size;
 }
 
 /******************************************************/
-std::vector<int> QSystem::get_bits() {
+std::vector<int> QSystem::bits() {
   std::vector<int> vec;
-  for (size_t i = 0; i < size; i++)
-    vec.push_back(bits[i]);
-  return vec;
-}
-
-/******************************************************/
-size_t QSystem::get_an_size() {
-  return an_size;
-}
-
-/******************************************************/
-std::vector<int> QSystem::get_an_bits() {
-  std::vector<int> vec;
+  for (size_t i = 0; i < _size; i++)
+    vec.push_back(_bits[i]);
   for (size_t i = 0; i < an_size; i++)
     vec.push_back(an_bits[i]);
   return vec;
@@ -140,7 +134,7 @@ std::vector<int> QSystem::get_an_bits() {
 
 /******************************************************/
 PyObject* QSystem::get_qbits() {
-  if (not syncc) sync();
+  sync();
   qbits.sync();
 
   PyObject* csc_tuple = PyTuple_New(3);
@@ -172,12 +166,12 @@ PyObject* QSystem::get_qbits() {
 }
 
 /******************************************************/
-void QSystem::set_qbits(vec_size row_ind,
-                        vec_size col_ptr,
-                          vec_cx values,
-                          size_t nqbits,
-                     std::string state) {
-  if (not syncc) clar();
+void QSystem::set_qbits(vec_size_t row_ind,
+                        vec_size_t col_ptr,
+                       vec_complex values,
+                            size_t nqbits,
+                       std::string state) {
+  clar();
 
   qbits = sp_cx_mat(conv_to<uvec>::from(row_ind),
                     conv_to<uvec>::from(col_ptr),
@@ -185,69 +179,100 @@ void QSystem::set_qbits(vec_size row_ind,
                     1ul << nqbits,
                     state == "pure"? 1ul : 1ul << nqbits);
                     
-  this->state = state;
-  size = nqbits;
+  this->_state = state;
+  _size = nqbits;
 }
 
 /******************************************************/
 void QSystem::change_to(std::string state) {
   if (state != "mix" and state != "pure") 
-    throw std::invalid_argument{"Argument \'state\' must be \"pure\" or \"mix\", not \""
-      + state + "\"."};
+    throw std::invalid_argument{std::string{"Argument \'state\' must be"}
+                              + std::string{"\"pure\" or \"mix\", not \""}
+                              + state + "\"."};
 
-  if (state == this->state) 
+  if (state == _state) 
     return;
 
   if (state == "mix") {
     qbits = qbits*qbits.t();
   } else if (state == "pure") {
-    sp_cx_mat nqbits{1ul << (size+an_size), 1};
-    for (size_t i = 0; i < 1ul << (size+an_size); i++)
+    sp_cx_mat nqbits{1ul << size(), 1};
+    for (size_t i = 0; i < 1ul << size(); i++)
       nqbits(i,0) = sqrt(qbits(i,i).real());
     qbits = nqbits;
   }
   
-  this->state = state;
+  _state = state;
 }
 
 /******************************************************/
-std::string QSystem::get_state() {
-  return state;
+std::string QSystem::state() {
+  return _state;
 }
 
 /******************************************************/
 void QSystem::save(std::string path) {
-  if (not syncc) sync();
+  sync();
   qbits.save(path, arma_binary);
 }
 
+void QSystem::load(std::string path) {
+  _sync = true;
+  an_size = 0;
+  if (an_ops) {
+    delete an_ops;
+    delete an_bits;
+  }
+  an_ops = nullptr; 
+  an_bits = nullptr;
+  qbits.load(path, arma_binary);
+  _size = log2(qbits.n_rows);
+  _state = qbits.n_cols > 1 ? "mix" : "pure";
+  delete _ops;
+  delete _bits;
+  _ops = new Gate_aux[_size];
+  _bits = new Bit[_size]();
+}
+
+
 /******************************************************/
-arma::sp_cx_mat QSystem::get_gate(Op &op) {
-    switch (op.tag) {
-    case Op::NONE:
-      return gate.get('I');
-    case Op::GATE_1:
-      return gate.get(std::get<char>(op.data));
-    case Op::GATE_N:
-      return gate.cget(std::get<std::string>(op.data));
-    case Op::CNOT:
-      return make_cnot(std::get<cnot_pair>(op.data).first,
-                       std::get<cnot_pair>(op.data).second,
-                       op.size);
-    case Op::CPHASE:
-      return make_cphase(std::get<0>(std::get<cph_tuple>(op.data)),
-                         std::get<1>(std::get<cph_tuple>(op.data)),
-                         std::get<2>(std::get<cph_tuple>(op.data)),
+QSystem::Gate_aux& QSystem::ops(size_t index) {
+  return index > _size? an_ops[index-_size] : _ops[index];
+}
+
+
+/******************************************************/
+arma::sp_cx_mat QSystem::get_gate(Gate_aux &op) {
+  auto get = [&]() {
+      switch (op.tag) {
+      case Gate_aux::GATE_1:
+        return gates.get(std::get<char>(op.data));
+      case Gate_aux::GATE_N:
+        return gates.mget(std::get<std::string>(op.data));
+      case Gate_aux::CNOT:
+        return make_cnot(std::get<cnot_pair>(op.data).first,
+                         std::get<cnot_pair>(op.data).second,
                          op.size);
-    case Op::SWAP:
-      return make_swap(op.size);
-    default:
-      return make_qft(op.size);
-    }
+      case Gate_aux::CPHASE:
+        return make_cphase(std::get<0>(std::get<cph_tuple>(op.data)),
+                           std::get<1>(std::get<cph_tuple>(op.data)),
+                           std::get<2>(std::get<cph_tuple>(op.data)),
+                           op.size);
+      case Gate_aux::SWAP:
+        return make_swap(op.size);
+      default:
+        return make_qft(op.size);
+      }
+  };
+
+  if (op.inver) 
+    return get().t();
+  else 
+    return get();
 }
 
 /******************************************************/
-cut_pair QSystem::cut(size_t &target, vec_size &control) {
+cut_pair QSystem::cut(size_t &target, vec_size_t &control) {
   size_t maxq = std::max(target,
                          *std::max_element(control.begin(),
                                            control.end()));
@@ -262,19 +287,15 @@ cut_pair QSystem::cut(size_t &target, vec_size &control) {
 }
 
 /******************************************************/
-void QSystem::fill(Op::Tag tag, size_t qbit, size_t size_n) {
+void QSystem::fill(Gate_aux::Tag tag, size_t qbit, size_t size_n) {
   sync(qbit, qbit+size_n);
 
-  ops[qbit].tag = tag;
-  ops[qbit].size = size_n;
+  ops(qbit).tag = tag;
+  ops(qbit).size = size_n;
  
-  for (size_t i = qbit+1; (i < qbit+size_n) and (i < size); i++)
-    ops[i].tag = tag;
-  if (qbit+size_n > size) {
-    for (size_t i = 0; i < qbit+size_n-size; i++ )
-      an_ops[i].tag = tag;
-  }
+  for (size_t i = qbit+1; i < qbit+size_n; i++)
+    ops(i).tag = tag;
 
-  syncc = false;
+  _sync = false;
 }
 

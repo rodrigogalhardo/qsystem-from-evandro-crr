@@ -27,66 +27,59 @@
 using namespace arma;
 
 /******************************************************/
-void QSystem::measure(size_t qbit) {
-  if (qbit >= size+an_size)
-    throw std::out_of_range("Argument 'qbit' must be in range  [0, "
-        + std::to_string(size+an_size-1) + "].");
+void QSystem::measure(size_t qbit, size_t count) {
+  count += qbit;
+  for (; qbit < count; qbit++) {
 
-  if (not syncc) sync();
+    sync();
 
-  double pm = 0;
-  if (state == "pure") {
-    for (auto i = qbits.begin(); i != qbits.end(); ++i) {
-      if (~i.row() & 1ul << (size+an_size-qbit-1)) {
-        auto valor = abs((cx_double) *i);
-        pm += valor*valor;
+    double pm = 0;
+    if (_state == "pure") {
+      for (auto i = qbits.begin(); i != qbits.end(); ++i) {
+        if (~i.row() & 1ul << (size()-qbit-1)) {
+          auto valor = abs((cx_double) *i);
+          pm += valor*valor;
+        }
       }
+    } else if (_state == "mix") {
+      sp_cx_mat m_aux = qbits.diag(); 
+      for (auto i = m_aux.begin(); i != m_aux.end(); ++i) 
+        if (~i.row() & 1ul << (size()-qbit-1)) 
+          pm += (*i).real();
     }
-  } else if (state == "mix") {
-    sp_cx_mat m_aux = qbits.diag(); 
-    for (auto i = m_aux.begin(); i != m_aux.end(); ++i) 
-      if (~i.row() & 1ul << (size+an_size-qbit-1)) 
-        pm += (*i).real();
+
+    auto result = [&](Bit mea, double pm) {
+      auto lnot = mea == ZERO? [](size_t i) { return ~i; } 
+                             : [](size_t i) { return i; };
+      if (qbit < _size) _bits[qbit] = mea;
+        else an_bits[qbit-_size] = mea;
+
+      sp_cx_mat qbitsm{1ul << size(),
+                       _state == "pure"? 1 : 1ul << size()};
+
+      if (_state == "pure") {
+        for (auto i = qbits.begin(); i != qbits.end(); ++i) 
+          if (lnot(i.row()) & 1ul << (size()-qbit-1))  
+            qbitsm(i.row(), 0) = (complex)(*i)/sqrt(pm);
+      } else if (_state == "mix") {
+        for (auto i = qbits.begin(); i != qbits.end(); ++i) 
+          if (lnot(i.row()) & 1ul << (size()-qbit-1)
+              and lnot(i.col()) & 1ul << (size()-qbit-1)) 
+            qbitsm(i.row(), i.col()) = (complex)(*i)/pm;
+      }
+
+      return qbitsm;
+    };
+    
+    if (pm != 0 and double(std::rand()) / double(RAND_MAX) <= pm) 
+      qbits = result(ZERO, pm);
+    else 
+      qbits = result(ONE, 1.0 - pm);
   }
-
-  auto result = [&](Bit mea, double pm) {
-    auto lnot = mea == zero? [](size_t i) { return ~i; } 
-                           : [](size_t i) { return i; };
-    if (qbit < size) bits[qbit] = mea;
-      else an_bits[qbit-size] = mea;
-
-    sp_cx_mat qbitsm{1ul << (size+an_size),
-                     state == "pure"? 1 : 1ul << (size+an_size)};
-
-    if (state == "pure") {
-      for (auto i = qbits.begin(); i != qbits.end(); ++i) 
-        if (lnot(i.row()) & 1ul << (size+an_size-qbit-1))  
-          qbitsm(i.row(), 0) = (cx_double)(*i)/sqrt(pm);
-    } else if (state == "mix") {
-      for (auto i = qbits.begin(); i != qbits.end(); ++i) 
-        if (lnot(i.row()) & 1ul << (size+an_size-qbit-1) 
-            and lnot(i.col()) & 1ul << (size+an_size-qbit-1)) 
-          qbitsm(i.row(), i.col()) = (cx_double)(*i)/pm;
-    }
-
-    return qbitsm;
-  };
-  
-  if (pm != 0 and double(std::rand()) / double(RAND_MAX) <= pm) 
-    qbits = result(zero, pm);
-  else 
-    qbits = result(one, 1.0 - pm);
-}
-
-/******************************************************/
-void QSystem::measure(size_t qbegin, size_t qend) {
-  for (size_t i = qbegin; i < qend; i++) 
-    measure(i);
 }
 
 /******************************************************/
 void QSystem::measure_all() {
-  for (size_t i = 0; i < size+an_size; i++) 
-    measure(i);
+  measure(0, size());
 }
 

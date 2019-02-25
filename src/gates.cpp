@@ -22,16 +22,16 @@
  * SOFTWARE.
  */                                                                               
 
-#include "../header/gate.h"
+#include "../header/gates.h"
 #include "../header/microtar.h"
 
 using namespace arma;
 
 /*********************************************************/
-Gate::Gate() {}
+Gates::Gates() {}
 
 /*********************************************************/
-Gate::Gate(std::string path) {
+Gates::Gates(std::string path) {
   mtar_t tar;
   mtar_header_t h;
   char *m;
@@ -46,34 +46,34 @@ Gate::Gate(std::string path) {
     free(m);
     sp_cx_mat matrix;
     matrix.load(ss, arma_binary);
-    cmap[std::string(h.name)] = matrix;
+    mmap[std::string(h.name)] = matrix;
   }
 
   mtar_close(&tar);
 }
 
 /*********************************************************/
-sp_cx_mat& Gate::get(char gate) {
+sp_cx_mat& Gates::get(char gate) {
   return map.at(gate);
 }
 
 /*********************************************************/
-sp_cx_mat& Gate::cget(std::string gate) {
-  return cmap.at(gate);
+sp_cx_mat& Gates::mget(std::string gate) {
+  return mmap.at(gate);
 }
 
 /*********************************************************/
-void Gate::make_gate(char name, vec_cx matrix) {
+void Gates::make_gate(char name, vec_complex matrix) {
   map[name] = sp_cx_mat{cx_mat{{{matrix[0], matrix[1]},
                                 {matrix[2], matrix[3]}}}};
 }
 
 /*********************************************************/
-void Gate::make_gate(std::string name,
+void Gates::make_mgate(std::string name,
                           size_t size, 
-             std::vector<size_t> row,
-             std::vector<size_t> col,
-                          vec_cx value) {
+                      vec_size_t row,
+                      vec_size_t col,
+                     vec_complex value) {
   auto sizem = 1ul << size;
   sp_cx_mat m{sizem, sizem};
 
@@ -81,11 +81,11 @@ void Gate::make_gate(std::string name,
     m(row[i], col[i]) = value[i];
   }
 
-  cmap[name] = m;
+  mmap[name] = m;
 }
 
 /*********************************************************/
-void Gate::make_cgate(std::string name,
+void Gates::make_cgate(std::string name,
                       std::string gates,
               std::vector<size_t> control) {
 
@@ -120,13 +120,13 @@ void Gate::make_cgate(std::string name,
     }
   }
 
-  cmap[name] = cm;
+  mmap[name] = cm;
 }
 
 /*********************************************************/
-std::string Gate::__str__() {
+std::string Gates::__str__() {
   std::stringstream out;
-  for (auto& gate: cmap) {
+  for (auto& gate: mmap) {
     out << gate.first << " - "
         << log2(gate.second.n_rows)  << " qbits long"<< std::endl;
   }
@@ -134,11 +134,11 @@ std::string Gate::__str__() {
 }
 
 /*********************************************************/
-void Gate::save(std::string path){
+void Gates::save(std::string path){
   mtar_t tar;
   mtar_open(&tar, path.c_str(), "w");
 
-  for (auto &m : cmap) {
+  for (auto &m : mmap) {
     std::stringstream file;
     m.second.save(file, arma_binary);
     file.seekg(0, ios::end);

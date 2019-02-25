@@ -28,12 +28,12 @@
 #include <complex>
 #include <utility>
 using size_t = long unsigned;
-using cx = std::complex<double>;
-using vec_cx = std::vector<std::complex<double>>;
-using vec_size = std::vector<size_t>;
+using complex = std::complex<double>;
+using vec_complex = std::vector<std::complex<double>>;
+using vec_size_t = std::vector<size_t>;
 using vec_str = std::vector<std::string>;
 using vec_int = std::vector<int>;
-using vec_d = std::vector<double>;
-using cnot_pair = std::pair<size_t, vec_size>;
-using cph_tuple = std::tuple<cx, size_t, vec_size>;
+using vec_float = std::vector<double>;
+using cnot_pair = std::pair<size_t, vec_size_t>;
+using cph_tuple = std::tuple<complex, size_t, vec_size_t>;
 using cut_pair = std::pair<size_t, size_t>;

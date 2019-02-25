@@ -30,10 +30,10 @@
 using size_t = long unsigned;
 %}
 
-%template(vec_size) std::vector<size_t>;
-%template(vec_cx) std::vector<std::complex<double>>;
+%template(vec_size_t) std::vector<size_t>;
+%template(vec_complex) std::vector<std::complex<double>>;
 %template(vec_int) std::vector<int>;
-%template(vec_d) std::vector<double>;
+%template(vec_float) std::vector<double>;
 %template(vec_str) std::vector<std::string>;
 
 %module qsystem
@@ -49,17 +49,7 @@ using size_t = long unsigned;
   }
 }
 
-%typemap(out) std::vector<int> QSystem::get_bits %{
-  $result = PyList_New($1.size());
-  for (size_t i = 0; i < $1.size(); i++) {
-    if ($1[i] == 0) 
-      PyList_SetItem($result, i, Py_None);
-    else 
-      PyList_SetItem($result, i, PyLong_FromLong($1[i]-1));
-  }
-%}
-
-%typemap(out) std::vector<int> QSystem::get_an_bits %{
+%typemap(out) std::vector<int> QSystem::bits %{
   $result = PyList_New($1.size());
   for (size_t i = 0; i < $1.size(); i++) {
     if ($1[i] == 0) 
@@ -70,7 +60,7 @@ using size_t = long unsigned;
 %}
 
 %include "../header/qsystem.h"
-%include "../header/gate.h"
+%include "../header/gates.h"
 %include "../header/using.h"
 
 %pythoncode %{

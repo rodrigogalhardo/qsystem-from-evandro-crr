@@ -32,15 +32,15 @@ sp_cx_mat QSystem::make_gate(sp_cx_mat gate, size_t qbit) {
   sp_cx_mat m;
   size_t gate_size = log2(gate.n_rows);
   if (qbit == 0) {
-    size_t eyesize = 1ul << (size+an_size-gate_size);
+    size_t eyesize = 1ul << (size()-gate_size);
     m = kron(gate, eye<sp_cx_mat>(eyesize, eyesize));
-  } else if (qbit == size+an_size-gate_size) {
-    size_t eyesize = 1ul << (size+an_size-gate_size);
+  } else if (qbit == size()-gate_size) {
+    size_t eyesize = 1ul << (size()-gate_size);
     m = kron(eye<sp_cx_mat>(eyesize, eyesize), gate);
   } else {
     size_t eyesize = 1ul << qbit;
     m = kron(eye<sp_cx_mat>(eyesize, eyesize), gate);
-    eyesize = 1ul << (size+an_size-qbit-gate_size);
+    eyesize = 1ul << (size()-qbit-gate_size);
     m = kron(m, eye<sp_cx_mat>(eyesize, eyesize));
   }
   return m;
@@ -48,7 +48,7 @@ sp_cx_mat QSystem::make_gate(sp_cx_mat gate, size_t qbit) {
 
 /*********************************************************/
 sp_cx_mat QSystem::make_cnot(size_t target,
-                           vec_size control,
+                         vec_size_t control,
                              size_t size_n) {
   sp_cx_mat cnotm{1ul << size_n, 1ul << size_n};
 
@@ -68,10 +68,10 @@ sp_cx_mat QSystem::make_cnot(size_t target,
 }
 
 /******************************************************/
-sp_cx_mat QSystem::make_cphase(cx phase,
-                           size_t target,
-                         vec_size control,
-                           size_t size_n) {
+sp_cx_mat QSystem::make_cphase(complex phase,
+                                size_t target,
+                            vec_size_t control,
+                                size_t size_n) {
   sp_cx_mat cphasem{1ul << size_n, 1ul << size_n};
 
   for (size_t i = 0; i < (1lu << size_n); i++) {
@@ -111,7 +111,7 @@ sp_cx_mat QSystem::make_swap(size_t size_n) {
 /******************************************************/
 sp_cx_mat QSystem::make_qft(size_t size_n) {
   double pi = acos(-1);
-  cx w = std::exp((2*pi*1i)/(pow(2, size_n)));
+  complex w = std::exp((2*pi*1i)/(pow(2, size_n)));
   sp_cx_mat qftm{1ul << size_n, 1ul << size_n};
   for (size_t i = 0; i < (1ul << size_n); i++) 
     for (size_t j = 0; j < (1ul << size_n); j++) 

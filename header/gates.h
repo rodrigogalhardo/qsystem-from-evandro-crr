@@ -27,34 +27,33 @@
 #include <map>
 #include <armadillo>
 
-class Gate {
+class Gates {
   public:
-    Gate();
+    Gates();
 
-    Gate(std::string path);
+    Gates(std::string path);
 
-    arma::sp_cx_mat& get(char gat);
-    arma::sp_cx_mat& cget(std::string gat);
+    arma::sp_cx_mat& get(char gate);
+    arma::sp_cx_mat& mget(std::string gate);
 
-    void make_gate(char name,
-                 vec_cx matrix);
+    void make_gate(char name, vec_complex matrix);
 
-    void make_gate(std::string name,
+    void make_mgate(std::string name,
                         size_t size,
-                      vec_size row,
-                      vec_size col,
-                        vec_cx value);
+                    vec_size_t row,
+                    vec_size_t col,
+                   vec_complex value);
 
     void make_cgate(std::string name,
                     std::string gates,
-                       vec_size control);
+                     vec_size_t control);
 
     std::string __str__();
 
     void save(std::string path);
 
   private:
-  std::map<std::string, arma::sp_cx_mat> cmap;
+  std::map<std::string, arma::sp_cx_mat> mmap;
 
   std::map<char, arma::sp_cx_mat> map{
     {'I', arma::sp_cx_mat{arma::cx_mat{{{{1,0}, {0,0}},

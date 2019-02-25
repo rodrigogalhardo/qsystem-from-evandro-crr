@@ -1,4 +1,4 @@
-OBJ = src/gate.o src/microtar.o src/qs_ancillas.o src/qs_errors.o
+OBJ = src/gates.o src/microtar.o src/qs_ancillas.o src/qs_errors.o
 OBJ += src/qs_make.o src/qs_evol.o src/qs_measure.o
 OBJ += src/qs_utility.o src/qsystem.o
 HEADER = $(wildcard header/*.h)
@@ -21,7 +21,7 @@ all: $(OBJ) qsystem.py
 	$(CC) -c $< -o $@ $(CFLAGS)
 
 %.cpp: %.i $(HEADER)
-	swig -c++ -python -o $@ $< 
+	swig -c++ -python -o $@ $<  
 
 qsystem.py:
 	ln -s src/qsystem.py $@
