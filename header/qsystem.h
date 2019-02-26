@@ -53,8 +53,8 @@ class QSystem {
   public:
     QSystem(size_t nqbits,
              Gates& gates,
-       std::string state="pure",
-            size_t seed=42);
+            size_t seed=42,
+       std::string state="pure");
 
     ~QSystem();
     

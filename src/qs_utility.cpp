@@ -31,8 +31,8 @@ using namespace arma;
 /******************************************************/
 QSystem::QSystem(size_t nqbits,
                   Gates& gates,
-            std::string state,
-                 size_t seed) :
+                  size_t seed,
+             std::string state) :
   gates{gates},
   _size{nqbits},
   _state{state},
