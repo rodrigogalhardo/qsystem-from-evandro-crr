@@ -2,25 +2,15 @@
 A Python quantum computer simulator to study error correction and quantum
 algorithm.
 
-## Dependencies 
-* [Armadillo](http://arma.sourceforge.net/)
-* [SWIG](http://www.swig.org/)
+## Examples
+* [Shor's factoring algorithm](https://nbviewer.jupyter.org/urls/gitlab.com/evandro-crr/qsystem/raw/master/example/factoring.ipynb)
 
 ## Install
-```
-git clone https://gitlab.com/evandro-crr/qsystem.git 
-cd qsystem
-sudo make install
-```
-or 
 ```
 sudo pip install qsystem
 ```
 
-## Use without installation 
-```
-git clone https://gitlab.com/evandro-crr/qsystem.git 
-cd qsystem
-make -j4
-```
+## Make dependencies 
+* [Armadillo](http://arma.sourceforge.net/)
+* [SWIG](http://www.swig.org/)
 
