@@ -6,7 +6,7 @@ with open('README.md', 'r') as fh:
 
 ext_module = Extension('_qsystem',
         sources=['src/qsystem.cpp',
-                 'src/gate.cpp',
+                 'src/gates.cpp',
                  'src/microtar.c', 
                  'src/qs_ancillas.cpp',
                  'src/qs_errors.cpp',
@@ -19,7 +19,7 @@ ext_module = Extension('_qsystem',
         )
 
 setup (name = 'QSystem',
-       version='1.1.2rc1',
+       version='1.1.3rc1',
        author='Bruno Gouvêa Taketani, Evandro Chagas Ribeiro da Rosa',
        author_email='b.taketani@ufsc.br, ev.crr97@gmail.com',
        description='A Python quantum computer simulator',
