@@ -28,10 +28,10 @@ using namespace arma;
 
 /******************************************************/
 void QSystem::measure(size_t qbit, size_t count) {
+  sync();
   count += qbit;
   for (; qbit < count; qbit++) {
 
-    sync();
 
     double pm = 0;
     if (_state == "pure") {

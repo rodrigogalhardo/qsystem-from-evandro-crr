@@ -91,8 +91,9 @@ void QSystem::sync() {
   
   evolm = get_gate(ops(0));
 
-  for (size_t i = ops(0).size; i < size(); i += ops(i).size) 
+  for (size_t i = ops(0).size; i < size(); i += ops(i).size) {
     evolm = kron(evolm, get_gate(ops(i)));
+  }
 
   if (_state == "pure")
     qbits = evolm*qbits;
@@ -100,10 +101,10 @@ void QSystem::sync() {
     qbits = evolm*qbits*evolm.t();
 
   delete[] _ops;
-  _ops = new Gate_aux[_size];
+  _ops = new Gate_aux[_size]();
   if (an_ops) {
     delete[] an_ops;
-    an_ops = new Gate_aux[an_size];
+    an_ops = new Gate_aux[an_size]();
   }
 
   _sync = true;
@@ -122,10 +123,10 @@ void QSystem::sync(size_t qbegin, size_t qend) {
 /******************************************************/
 void QSystem::clar() {
   delete _ops;
-  _ops = new Gate_aux[_size];
+  _ops = new Gate_aux[_size]();
   if (an_ops) {
     delete an_ops;
-    an_ops = new Gate_aux[an_size];
+    an_ops = new Gate_aux[an_size]();
   }
 
   _sync = true;

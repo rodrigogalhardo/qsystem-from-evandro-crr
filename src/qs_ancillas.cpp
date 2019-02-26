@@ -34,7 +34,7 @@ void QSystem::add_ancillas(size_t nqbits) {
   sync();
 
   an_size = nqbits;
-  an_ops = new Gate_aux[an_size];
+  an_ops = new Gate_aux[an_size]();
   an_bits = new Bit[an_size]();
 
   sp_cx_mat an_qbits{1ul << an_size, _state == "mix" ? 1lu << an_size : 1};

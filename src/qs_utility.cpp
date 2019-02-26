@@ -36,7 +36,7 @@ QSystem::QSystem(size_t nqbits,
   gates{gates},
   _size{nqbits},
   _state{state},
-  _ops{new Gate_aux[nqbits]},
+  _ops{new Gate_aux[nqbits]()},
   _sync{true},
   qbits{1lu << nqbits, state == "mix" ? 1lu << nqbits : 1},
   _bits{new Bit[nqbits]()}, 
@@ -230,14 +230,14 @@ void QSystem::load(std::string path) {
   _state = qbits.n_cols > 1 ? "mix" : "pure";
   delete _ops;
   delete _bits;
-  _ops = new Gate_aux[_size];
+  _ops = new Gate_aux[_size]();
   _bits = new Bit[_size]();
 }
 
 
 /******************************************************/
 QSystem::Gate_aux& QSystem::ops(size_t index) {
-  return index > _size? an_ops[index-_size] : _ops[index];
+  return index < _size? _ops[index] : an_ops[index-_size];
 }
 
 
