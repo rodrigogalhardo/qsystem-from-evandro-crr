@@ -1,4 +1,5 @@
 **/*.o
+**/.ipynb_checkpoints
 QSystem.egg-info/
 armadillo-code/
 dist/
