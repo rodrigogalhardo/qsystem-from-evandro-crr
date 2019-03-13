@@ -19,7 +19,7 @@ ext_module = Extension('_qsystem',
         )
 
 setup (name = 'QSystem',
-       version='1.1.3rc1',
+       version='1.1.4rc1',
        author='Bruno Gouvêa Taketani, Evandro Chagas Ribeiro da Rosa',
        author_email='b.taketani@ufsc.br, ev.crr97@gmail.com',
        description='A Python quantum computer simulator',
