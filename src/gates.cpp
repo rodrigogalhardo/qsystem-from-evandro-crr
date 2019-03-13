@@ -124,6 +124,41 @@ void Gates::make_cgate(std::string name,
 }
 
 /*********************************************************/
+void Gates::make_fgate(std::string name,
+                         PyObject* func,
+                            size_t size,
+                         PyObject* iterator) {
+
+  sp_cx_mat m{1ul << size, 1ul << size};
+
+  if (iterator == Py_None) {
+    PyObject *builtins = PyEval_GetBuiltins(); 
+    PyObject *range = PyDict_GetItemString(builtins , "range");
+    iterator = PyEval_CallFunction(range, "i", 1ul << size);
+  }
+
+  auto* it = PyObject_GetIter(iterator);
+  
+  PyObject* pyj;
+  while ((pyj = PyIter_Next(it))) {
+    auto* arg = PyTuple_Pack(1, pyj);
+    auto* pyi = PyObject_CallObject(func,   arg);
+    
+    auto i = PyLong_AsSize_t(pyi);
+    auto j = PyLong_AsSize_t(pyj);
+
+    m(i, j) = 1;
+   
+    Py_DECREF(pyi);
+    Py_DECREF(pyj);
+  }
+
+  Py_DECREF(it);
+
+  mmap[name] = m;
+}
+
+/*********************************************************/
 std::string Gates::__str__() {
   std::stringstream out;
   for (auto& gate: mmap) {

@@ -26,6 +26,7 @@
 #include "using.h"
 #include <map>
 #include <armadillo>
+#include <Python.h>
 
 class Gates {
   public:
@@ -47,6 +48,11 @@ class Gates {
     void make_cgate(std::string name,
                     std::string gates,
                      vec_size_t control);
+
+    void make_fgate(std::string name,
+                      PyObject* func,
+                         size_t size,
+                      PyObject* iterator=Py_None);
 
     std::string __str__();
 
