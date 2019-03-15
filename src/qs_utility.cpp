@@ -47,7 +47,7 @@ QSystem::QSystem(size_t nqbits,
   if (state != "mix" and state != "pure") 
     throw std::invalid_argument{std::string{"Argument \'state\' must be"}
                               + std::string{"\"pure\" or \"mix\", not \""}
-                              + state + "\"."};
+                              + state + "\""};
   qbits(0,0) = 1;
   std::srand(seed);
 }
@@ -188,7 +188,7 @@ void QSystem::change_to(std::string state) {
   if (state != "mix" and state != "pure") 
     throw std::invalid_argument{std::string{"Argument \'state\' must be"}
                               + std::string{"\"pure\" or \"mix\", not \""}
-                              + state + "\"."};
+                              + state + "\""};
 
   if (state == _state) 
     return;

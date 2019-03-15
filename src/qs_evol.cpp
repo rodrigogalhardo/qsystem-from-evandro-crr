@@ -29,9 +29,22 @@ using namespace arma;
 
 /******************************************************/
 void QSystem::evol(std::string gate,
-                         size_t qbit, 
-                         size_t count,
-                           bool inver) {
+                        size_t qbit, 
+                        size_t count,
+                          bool inver) {
+  if (qbit >= size()) {
+      sstr err;
+      err << "Argument \'qbit\' should be in the range of 0 to "
+          << (size()-1);
+      throw std::invalid_argument{err.str()};
+  } else if (count == 0 and qbit+count <= size()) {
+      sstr err;
+      err << "Argument \'cout\' should be greater than 0 "
+          << "and qbit+count suld be in the range of 0 to "
+          << size();
+      throw std::invalid_argument{err.str()};
+  }
+
   if (gate.size() > 1) {
     auto size_n = log2(gates.mget(gate).n_rows);
     sync(qbit, qbit+count*size_n);
@@ -56,6 +69,21 @@ void QSystem::evol(std::string gate,
 
 /******************************************************/
 void QSystem::cnot(size_t target, vec_size_t control) {
+  if (target >= size()) {
+      sstr err;
+      err << "Argument \'target\' should be in the range of 0 to "
+          << (size()-1);
+      throw std::invalid_argument{err.str()};
+  } 
+  for (auto& i : control) {
+    if (i >= size()) {
+      sstr err;
+      err << "Items in \'control\' should be in the range of 0 to "
+          << (size()-1);
+      throw std::invalid_argument{err.str()};
+    }
+  }
+
   auto [size_n, minq] = cut(target, control);
   fill(Gate_aux::CNOT, minq, size_n);
   ops(minq).data = cnot_pair{target, control};
@@ -63,6 +91,25 @@ void QSystem::cnot(size_t target, vec_size_t control) {
 
 /******************************************************/
 void QSystem::cphase(complex phase, size_t target, vec_size_t control) {
+  if (target >= size()) {
+      sstr err;
+      err << "Argument \'target\' should be in the range of 0 to "
+          << (size()-1);
+      throw std::invalid_argument{err.str()};
+  } else if (std::abs(std::abs(phase) - 1.0) > 1e-14) {
+    sstr err;
+    err << "abs(phase) must be equal to 1";
+    throw std::invalid_argument{err.str()};
+  }
+  for (auto& i : control) {
+    if (i >= size()) {
+      sstr err;
+      err << "Items in \'control\' should be in the range of 0 to "
+          << (size()-1);
+      throw std::invalid_argument{err.str()};
+    }
+  }
+
   auto [size_n, minq] = cut(target, control);
   fill(Gate_aux::CPHASE, minq, size_n);
   ops(minq).data = cph_tuple{phase, target, control};
@@ -70,6 +117,13 @@ void QSystem::cphase(complex phase, size_t target, vec_size_t control) {
 
 /******************************************************/
 void QSystem::swap(size_t qbit_a, size_t qbit_b) {
+  if (qbit_a >= size() or qbit_b >= size()) {
+      sstr err;
+      err << "Arguments \'qbit_a\' and \'qbit_b\' should be in the "
+          << "range of 0 to " << (size()-1);
+      throw std::invalid_argument{err.str()};
+  }
+
   if (qbit_a == qbit_b) return;
   size_t a = qbit_a < qbit_b? qbit_a :  qbit_b;
   size_t b = qbit_a > qbit_b? qbit_a :  qbit_b;
@@ -78,6 +132,15 @@ void QSystem::swap(size_t qbit_a, size_t qbit_b) {
 
 /******************************************************/
 void QSystem::qft(size_t qbegin, size_t qend, bool inver) {
+  if (qbegin >= size() or qend > size() or qbegin <= qend) {
+      sstr err;
+      err << "Argument \'qbegin\' should be in the "
+          << "range of 0 to " << (size()-1)
+          << "and argument \'qend\' should be greater than 0 "
+          << "and in the range of 0 to " << size();
+      throw std::invalid_argument{err.str()};
+  }
+
   fill(Gate_aux::QFT, qbegin, qend-qbegin);
   ops(qbegin).inver = inver;
 }

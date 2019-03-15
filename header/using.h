@@ -27,6 +27,7 @@
 #include <string>
 #include <complex>
 #include <utility>
+#include <sstream>
 using size_t = long unsigned;
 using complex = std::complex<double>;
 using vec_complex = std::vector<std::complex<double>>;
@@ -37,3 +38,4 @@ using vec_float = std::vector<double>;
 using cnot_pair = std::pair<size_t, vec_size_t>;
 using cph_tuple = std::tuple<complex, size_t, vec_size_t>;
 using cut_pair = std::pair<size_t, size_t>;
+using sstr = std::stringstream;

@@ -36,7 +36,9 @@ Gates::Gates(std::string path) {
   mtar_header_t h;
   char *m;
 
-  mtar_open(&tar, path.c_str(), "r");
+  int err = mtar_open(&tar, path.c_str(), "r");
+  if (err < 0)
+    throw std::runtime_error{mtar_strerror(err)};
 
   for (; mtar_read_header(&tar, &h) != MTAR_ENULLRECORD; mtar_next(&tar)) {
     m = (char*) calloc(1, h.size);
@@ -64,6 +66,12 @@ sp_cx_mat& Gates::mget(std::string gate) {
 
 /*********************************************************/
 void Gates::make_gate(char name, vec_complex matrix) {
+  if (matrix.size() != 4) {
+    sstr err;
+    err << "Argument \'matrix\' argument must have exactly 4 elements:"
+        << "[u00, u01, u10, u11]";
+    throw std::invalid_argument{err.str()};
+  }
   map[name] = sp_cx_mat{cx_mat{{{matrix[0], matrix[1]},
                                 {matrix[2], matrix[3]}}}};
 }
@@ -74,6 +82,14 @@ void Gates::make_mgate(std::string name,
                       vec_size_t row,
                       vec_size_t col,
                      vec_complex value) {
+  if (row.size() != col.size()
+      or row.size() != value.size()
+      or col.size() != value.size()) {
+    sstr err;
+    err << "Arguments \'row\', \'col\' and \'value\' must have the same size";
+    throw std::invalid_argument{err.str()};
+  }
+
   auto sizem = 1ul << size;
   sp_cx_mat m{sizem, sizem};
 
@@ -87,16 +103,30 @@ void Gates::make_mgate(std::string name,
 /*********************************************************/
 void Gates::make_cgate(std::string name,
                       std::string gates,
-              std::vector<size_t> control) {
-
+                       vec_size_t control) {
   size_t size = gates.size();
+
+  for (auto& i : control) {
+    if (i >= size) {
+      sstr err;
+      err << "Items in \'control\' should be in the range of 0 to"
+          << (size-1);
+      throw std::invalid_argument{err.str()};
+    }
+  }
+
   size_t x = 0;
   size_t z = 0;
   for (size_t i = 0; i < size; i++) {
-    if (gates[i] == 'X')
+    if (gates[i] == 'X') {
       x |= 1ul << (size-i-1);
-    if (gates[i] == 'Z')
+    } else if (gates[i] == 'Z') {
       z |= 1ul << (size-i-1);
+    } else {
+      sstr err;
+      err << "Argument \'gates\' must have only \'Z\' and \'X\'";
+      throw std::invalid_argument{err.str()};
+    }
   }
 
   auto parity = [&](size_t x) {

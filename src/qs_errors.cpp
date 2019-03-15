@@ -28,13 +28,27 @@ using namespace arma;
 
 /******************************************************/
 void QSystem::flip(char gate, size_t qbit, double p) {
-  sync();
+  if (not (gate == 'X' or gate == 'Y' or gate == 'Z')) {
+    sstr err;
+    err << "Argument \'gate\' must be equal to \'X\', \'Y\' or \'X\'";
+    throw std::invalid_argument{err.str()};    
+  } else if (qbit >= size()) {
+    sstr err;
+    err << "Argument \'qbit\' should be in the range of 0 to "
+        << (size()-1);
+    throw std::invalid_argument{err.str()};
+  } else if (p < 0 or p > 1) {
+    sstr err;
+    err << "Argument \'p\' should be in the range of 0.0 to 1.0";
+    throw std::invalid_argument{err.str()};
+  }
 
   if (_state == "pure") {
-    if (auto prand = double(std::rand()) / double(RAND_MAX); p != 0 and prand <= p) 
+    if (auto pr = double(std::rand())/double(RAND_MAX); p != 0 and pr <= p) 
       evol(std::string{gate}, qbit);
 
   } else if (_state == "mix") {
+    sync();
     sp_cx_mat E0 = make_gate(gates.get(gate), qbit)*sqrt(p);
 
     size_t eyesize = 1ul << size();
@@ -46,8 +60,20 @@ void QSystem::flip(char gate, size_t qbit, double p) {
 
 /******************************************************/
 void QSystem::amp_damping(size_t qbit, double p) {
-  if (_state == "pure")
-    throw std::runtime_error{"\'state\' must be in \"mix\" to apply this channel."};
+  if (_state == "pure") {
+    sstr err;
+    err << "\'state\' must be in \"mix\" to apply this channel";
+    throw std::runtime_error{err.str()};
+  } else if (qbit >= size()) {
+    sstr err;
+    err << "Argument \'qbit\' should be in the range of 0 to "
+        << (size()-1);
+    throw std::invalid_argument{err.str()};
+  } else if (p < 0 or p > 1) {
+    sstr err;
+    err << "Argument \'p\' should be in the range of 0.0 to 1.0";
+    throw std::invalid_argument{err.str()};
+  }
 
   sync();
 
@@ -60,8 +86,20 @@ void QSystem::amp_damping(size_t qbit, double p) {
 
 /******************************************************/
 void QSystem::dpl_channel(size_t qbit, double p) {
-  if (_state == "pure")
-    throw std::runtime_error{"\'state\' must be in \"mix\" to apply this channel."};
+  if (_state == "pure") {
+    sstr err;
+    err << "\'state\' must be in \"mix\" to apply this channel";
+    throw std::runtime_error{err.str()};
+  } else if (qbit >= size()) {
+    sstr err;
+    err << "Argument \'qbit\' should be in the range of 0 to "
+        << (size()-1);
+    throw std::invalid_argument{err.str()};
+  } else if (p < 0 or p > 1) {
+    sstr err;
+    err << "Argument \'p\' should be in the range of 0.0 to 1.0";
+    throw std::invalid_argument{err.str()};
+  }
 
   sync();
 
@@ -74,9 +112,29 @@ void QSystem::dpl_channel(size_t qbit, double p) {
 
 /******************************************************/
 void QSystem::sum(size_t qbit, vec_str kraus, vec_float p) {
-  if (_state == "pure")
-    throw std::runtime_error{"\'state\' must be in \"mix\" to apply this channel."};
-  
+  if (_state == "pure") {
+    sstr err;
+    err << "\'state\' must be in \"mix\" to apply this channel";
+    throw std::runtime_error{err.str()};
+  } else if (qbit >= size()) {
+    sstr err;
+    err << "Argument \'qbit\' should be in the range of 0 to "
+        << (size()-1);
+    throw std::invalid_argument{err.str()};
+  } else if (std::abs(std::accumulate(p.begin(), p.end(), 0.0) -1.0) < 1e-14) {
+    sstr err;
+    err << "sum(p) must be equal to 1.0";
+    throw std::runtime_error{err.str()};
+  } 
+  size_t ksize = kraus[0].size();
+  for (auto& k : kraus) {
+    if (k.size() != ksize) {
+      sstr err;
+      err << "All \'kraus\' operators must have the same size";
+      throw std::runtime_error{err.str()};
+    }
+  }
+    
   sync();
 
   sp_cx_mat qbits_tmp{qbits.n_rows, qbits.n_cols};
