@@ -1,16 +1,16 @@
 # QSystem
-A Python quantum computer simulator to study error correction and quantum
-algorithm.
+A quantum computation simulator for Python.
 
-## Examples
-* [Shor's factoring algorithm](https://nbviewer.jupyter.org/urls/gitlab.com/evandro-crr/qsystem/raw/master/example/factoring.ipynb)
+Seed the [wiki](https://gitlab.com/evandro-crr/qsystem/wikis/home) for
+documentation.
 
-## Install
+## Install 
 ```
-sudo pip install qsystem
+pip install qsystem
 ```
+A C/C++ compiler is required to install QSystem from pip.
 
-## Make dependencies 
-* [Armadillo](http://arma.sourceforge.net/)
-* [SWIG](http://www.swig.org/)
-
+---------------------------
+This software is suported by 
+<img src="http://www.fapesc.sc.gov.br/wp-content/uploads/2014/09/logo-Fapesc-fundo-transparente.png"
+alt="FEPESC" width="54">
