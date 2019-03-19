@@ -37,7 +37,7 @@ void QSystem::add_ancillas(size_t nqbits) {
   an_ops = new Gate_aux[an_size]();
   an_bits = new Bit[an_size]();
 
-  sp_cx_mat an_qbits{1ul << an_size, _state == "mix" ? 1lu << an_size : 1};
+  sp_cx_mat an_qbits{1ul << an_size, _state == "matrix" ? 1lu << an_size : 1};
   an_qbits(0,0) = 1;
   qbits = kron(qbits, an_qbits);
 }
@@ -72,9 +72,9 @@ void QSystem::rm_ancillas() {
   };
 
   while (an_size) {
-    if (_state == "pure")
+    if (_state == "vector")
       qbits = tr_pure();
-    else if (_state == "mix")
+    else if (_state == "matrix")
       qbits = tr_mix();
     an_size--;
   }

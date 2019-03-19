@@ -45,14 +45,14 @@ void QSystem::measure(size_t qbit, size_t count) {
   count += qbit;
   for (; qbit < count; qbit++) {
     double pm = 0;
-    if (_state == "pure") {
+    if (_state == "vector") {
       for (auto i = qbits.begin(); i != qbits.end(); ++i) {
         if (~i.row() & 1ul << (size()-qbit-1)) {
           auto valor = abs((cx_double) *i);
           pm += valor*valor;
         }
       }
-    } else if (_state == "mix") {
+    } else if (_state == "matrix") {
       sp_cx_mat m_aux = qbits.diag(); 
       for (auto i = m_aux.begin(); i != m_aux.end(); ++i) 
         if (~i.row() & 1ul << (size()-qbit-1)) 
@@ -66,13 +66,13 @@ void QSystem::measure(size_t qbit, size_t count) {
         else an_bits[qbit-_size] = mea;
 
       sp_cx_mat qbitsm{1ul << size(),
-                       _state == "pure"? 1 : 1ul << size()};
+                       _state == "vector"? 1 : 1ul << size()};
 
-      if (_state == "pure") {
+      if (_state == "vector") {
         for (auto i = qbits.begin(); i != qbits.end(); ++i) 
           if (lnot(i.row()) & 1ul << (size()-qbit-1))  
             qbitsm(i.row(), 0) = (complex)(*i)/sqrt(pm);
-      } else if (_state == "mix") {
+      } else if (_state == "matrix") {
         for (auto i = qbits.begin(); i != qbits.end(); ++i) 
           if (lnot(i.row()) & 1ul << (size()-qbit-1)
               and lnot(i.col()) & 1ul << (size()-qbit-1)) 

@@ -38,15 +38,15 @@ QSystem::QSystem(size_t nqbits,
   _state{state},
   _ops{new Gate_aux[nqbits]()},
   _sync{true},
-  qbits{1lu << nqbits, state == "mix" ? 1lu << nqbits : 1},
+  qbits{1lu << nqbits, state == "matrix" ? 1lu << nqbits : 1},
   _bits{new Bit[nqbits]()}, 
   an_size{0},
   an_ops{nullptr},
   an_bits{nullptr}
 {
-  if (state != "mix" and state != "pure") 
+  if (state != "matrix" and state != "vector") 
     throw std::invalid_argument{std::string{"Argument \'state\' must be"}
-                              + std::string{"\"pure\" or \"mix\", not \""}
+                              + std::string{"\"vector\" or \"matrix\", not \""}
                               + state + "\""};
   qbits(0,0) = 1;
   std::srand(seed);
@@ -102,12 +102,12 @@ std::string QSystem::__str__() {
 
   sync();
   std::stringstream out;
-  if (state() == "pure") {
+  if (state() == "vector") {
     for (auto i = qbits.begin(); i != qbits.end(); ++i) {
       if (abs((cx_double)*i) < 1e-14) continue; 
       out << cx_to_str(*i) << to_bits(i.row()) << '\n';
     }
-  } else if (state() == "mix") {
+  } else if (state() == "matrix") {
     for (auto i = qbits.begin(); i != qbits.end(); ++i) {
       auto aux = cx_to_str(*i);
       out << "(" << i.row() << ", " << i.col() << ")    " <<
@@ -177,7 +177,7 @@ void QSystem::set_qbits(vec_size_t row_ind,
                     conv_to<uvec>::from(col_ptr),
                     cx_vec(values),
                     1ul << nqbits,
-                    state == "pure"? 1ul : 1ul << nqbits);
+                    state == "vector"? 1ul : 1ul << nqbits);
                     
   this->_state = state;
   _size = nqbits;
@@ -185,17 +185,17 @@ void QSystem::set_qbits(vec_size_t row_ind,
 
 /******************************************************/
 void QSystem::change_to(std::string state) {
-  if (state != "mix" and state != "pure") 
+  if (state != "matrix" and state != "vector") 
     throw std::invalid_argument{std::string{"Argument \'state\' must be"}
-                              + std::string{"\"pure\" or \"mix\", not \""}
+                              + std::string{"\"vector\" or \"matrix\", not \""}
                               + state + "\""};
 
   if (state == _state) 
     return;
 
-  if (state == "mix") {
+  if (state == "matrix") {
     qbits = qbits*qbits.t();
-  } else if (state == "pure") {
+  } else if (state == "vector") {
     sp_cx_mat nqbits{1ul << size(), 1};
     for (size_t i = 0; i < 1ul << size(); i++)
       nqbits(i,0) = sqrt(qbits(i,i).real());
@@ -227,7 +227,7 @@ void QSystem::load(std::string path) {
   an_bits = nullptr;
   qbits.load(path, arma_binary);
   _size = log2(qbits.n_rows);
-  _state = qbits.n_cols > 1 ? "mix" : "pure";
+  _state = qbits.n_cols > 1 ? "matrix" : "vector";
   delete _ops;
   delete _bits;
   _ops = new Gate_aux[_size]();

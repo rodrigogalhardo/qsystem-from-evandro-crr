@@ -43,11 +43,11 @@ void QSystem::flip(char gate, size_t qbit, double p) {
     throw std::invalid_argument{err.str()};
   }
 
-  if (_state == "pure") {
+  if (_state == "vector") {
     if (auto pr = double(std::rand())/double(RAND_MAX); p != 0 and pr <= p) 
       evol(std::string{gate}, qbit);
 
-  } else if (_state == "mix") {
+  } else if (_state == "matrix") {
     sync();
     sp_cx_mat E0 = make_gate(gates.get(gate), qbit)*sqrt(p);
 
@@ -60,9 +60,9 @@ void QSystem::flip(char gate, size_t qbit, double p) {
 
 /******************************************************/
 void QSystem::amp_damping(size_t qbit, double p) {
-  if (_state == "pure") {
+  if (_state == "vector") {
     sstr err;
-    err << "\'state\' must be in \"mix\" to apply this channel";
+    err << "\'state\' must be in \"matrix\" to apply this channel";
     throw std::runtime_error{err.str()};
   } else if (qbit >= size()) {
     sstr err;
@@ -86,9 +86,9 @@ void QSystem::amp_damping(size_t qbit, double p) {
 
 /******************************************************/
 void QSystem::dpl_channel(size_t qbit, double p) {
-  if (_state == "pure") {
+  if (_state == "vector") {
     sstr err;
-    err << "\'state\' must be in \"mix\" to apply this channel";
+    err << "\'state\' must be in \"matrix\" to apply this channel";
     throw std::runtime_error{err.str()};
   } else if (qbit >= size()) {
     sstr err;
@@ -112,9 +112,9 @@ void QSystem::dpl_channel(size_t qbit, double p) {
 
 /******************************************************/
 void QSystem::sum(size_t qbit, vec_str kraus, vec_float p) {
-  if (_state == "pure") {
+  if (_state == "vector") {
     sstr err;
-    err << "\'state\' must be in \"mix\" to apply this channel";
+    err << "\'state\' must be in \"matrix\" to apply this channel";
     throw std::runtime_error{err.str()};
   } else if (qbit >= size()) {
     sstr err;

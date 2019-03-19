@@ -158,9 +158,9 @@ void QSystem::sync() {
     evolm = kron(evolm, get_gate(ops(i)));
   }
 
-  if (_state == "pure")
+  if (_state == "vector")
     qbits = evolm*qbits;
-  else if (_state == "mix")
+  else if (_state == "matrix")
     qbits = evolm*qbits*evolm.t();
 
   delete[] _ops;

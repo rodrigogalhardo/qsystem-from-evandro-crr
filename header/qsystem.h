@@ -54,7 +54,7 @@ class QSystem {
     QSystem(size_t nqbits,
              Gates& gates,
             size_t seed=42,
-       std::string state="pure");
+       std::string state="vector");
 
     ~QSystem();
     
@@ -76,7 +76,7 @@ class QSystem {
     void            flip(char gate, size_t qbit, double p);
     void            amp_damping(size_t qbit, double p);
     void            dpl_channel(size_t qbit, double p);
-    void            sum(size_t qbit, vec_str kreaus, vec_float p);
+    void            sum(size_t qbit, vec_str kraus, vec_float p);
 
     /* utility */
     std::string     __str__();
