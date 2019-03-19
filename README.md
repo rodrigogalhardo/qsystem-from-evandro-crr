@@ -1,5 +1,5 @@
 # QSystem
-A quantum computation simulator for Python.
+A quantum computing simulator for Python.
 
 Seed the [wiki](https://gitlab.com/evandro-crr/qsystem/wikis/home) for
 documentation.
