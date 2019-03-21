@@ -1,13 +1,13 @@
 # QSystem
-![PyPI](https://img.shields.io/pypi/v/qsystem.svg)
-![PyPI - License](https://img.shields.io/pypi/l/qsystem.svg?color=brightgree)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/qsystem.svg?color=red)
+[![PyPI](https://img.shields.io/pypi/v/qsystem.svg)](https://pypi.org/project/QSystem/)
+[![PyPI - License](https://img.shields.io/pypi/l/qsystem.svg?color=brightgree)](https://gitlab.com/evandro-crr/qsystem/blob/master/LICENSE)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/qsystem.svg?color=red)](https://www.python.org/)
 
 A quantum computing simulator for Python.
 
 ------------------------
-The QSystem simulator is inspired in the quantum circuit model, so it's easy
-to convert any quantum circuit to  Python.
+The QSystem simulator is inspired in the quantum circuit model, so it's easy to
+convert any quantum circuit to  Python.
 
 Like the follow example:
 
