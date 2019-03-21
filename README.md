@@ -1,7 +1,7 @@
 # QSystem
 ![PyPI](https://img.shields.io/pypi/v/qsystem.svg)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/qsystem.svg)
-![PyPI - License](https://img.shields.io/pypi/l/qsystem.svg)
+![PyPI - License](https://img.shields.io/pypi/l/qsystem.svg?color=brightgree)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/qsystem.svg?color=red)
   
    
 A quantum computing simulator for Python.
