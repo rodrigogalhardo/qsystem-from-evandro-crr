@@ -121,10 +121,6 @@ void QSystem::sum(size_t qbit, vec_str kraus, vec_float p) {
     err << "Argument \'qbit\' should be in the range of 0 to "
         << (size()-1);
     throw std::invalid_argument{err.str()};
-  } else if (std::abs(std::accumulate(p.begin(), p.end(), 0.0) -1.0) < 1e-14) {
-    sstr err;
-    err << "sum(p) must be equal to 1.0";
-    throw std::runtime_error{err.str()};
   } 
   size_t ksize = kraus[0].size();
   for (auto& k : kraus) {
@@ -143,6 +139,7 @@ void QSystem::sum(size_t qbit, vec_str kraus, vec_float p) {
     sp_cx_mat E = gates.get(kraus[i][0]);
     for (size_t j = 1; j < kraus[i].size(); ++j)
       E = kron(E, gates.get(kraus[i][j]));
+    E = make_gate(E, qbit);
     
     qbits_tmp +=  p[i]*(E*qbits*E.t());
   }
