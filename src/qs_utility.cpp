@@ -184,25 +184,25 @@ void QSystem::set_qbits(vec_size_t row_ind,
 }
 
 /******************************************************/
-void QSystem::change_to(std::string state) {
-  if (state != "matrix" and state != "vector") 
-    throw std::invalid_argument{std::string{"Argument \'state\' must be"}
+void QSystem::change_to(std::string new_state) {
+  if (new_state != "matrix" and new_state != "vector") 
+    throw std::invalid_argument{std::string{"Argument \'new_state\' must be"}
                               + std::string{"\"vector\" or \"matrix\", not \""}
-                              + state + "\""};
+                              + new_state + "\""};
 
-  if (state == _state) 
+  if (new_state == _state) 
     return;
 
-  if (state == "matrix") {
+  if (new_state == "matrix") {
     qbits = qbits*qbits.t();
-  } else if (state == "vector") {
+  } else if (new_state == "vector") {
     sp_cx_mat nqbits{1ul << size(), 1};
     for (size_t i = 0; i < 1ul << size(); i++)
       nqbits(i,0) = sqrt(qbits(i,i).real());
     qbits = nqbits;
   }
   
-  _state = state;
+  _state = new_state;
 }
 
 /******************************************************/

@@ -86,7 +86,7 @@ class QSystem {
     void            save(std::string path);
     void            load(std::string path);
 
-    void            change_to(std::string _state);
+    void            change_to(std::string new_state);
 
     vec_int         bits();
     PyObject*       get_qbits();
