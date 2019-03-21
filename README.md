@@ -38,13 +38,13 @@ print('ancillas measurement =', q.bits()[3:])
 # ancillas measurement = [0, 1, 0, 0]
 q.rm_ancillas()                           # rm a0, a1, a2, a3
 
-q.evol('H', 0)                            # H q0
-q.cphase(phase=1j, target=1, control=[0]) # Controlled S q1, q0
-q.evol('H', 1)                            # H q1
-q.cphase(exp(pi*1j/4), 2, [0])            # Controlled T q2, q0
-q.cphase(1j, 2, [1])                      # Controlled S q2, q1
-q.evol('H', 2)                            # H q1
-q.swap(0, 2)                              # SWAP q0, q2
+q.evol('H', 0)                            # H q0                ┐
+q.cphase(phase=1j, target=1, control=[0]) # Controlled S q1, q0 │
+q.evol('H', 1)                            # H q1                │
+q.cphase(exp(pi*1j/4), 2, [0])            # Controlled T q2, q0 │ = q.qft(0, 3)
+q.cphase(1j, 2, [1])                      # Controlled S q2, q1 │
+q.evol('H', 2)                            # H q1                │
+q.swap(0, 2)                              # SWAP q0, q2         ┘
 
 q.measure(0, 3)                           # measure q0, q1, q2
 print('final measurement =', q.bits())
