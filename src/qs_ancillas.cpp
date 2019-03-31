@@ -29,7 +29,7 @@ using namespace arma;
 /******************************************************/
 void QSystem::add_ancillas(size_t nqbits) {
   if (nqbits == 0) 
-    throw std::invalid_argument{"Argument \'an_num\' must be greater than 0"};
+    throw std::invalid_argument{"\'an_num\' argument must be greater than 0"};
 
   sync();
 

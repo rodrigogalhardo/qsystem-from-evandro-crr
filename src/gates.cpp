@@ -68,7 +68,7 @@ sp_cx_mat& Gates::mget(std::string gate) {
 void Gates::make_gate(char name, vec_complex matrix) {
   if (matrix.size() != 4) {
     sstr err;
-    err << "Argument \'matrix\' argument must have exactly 4 elements:"
+    err << "\'matrix\' argument must have exactly 4 elements: "
         << "[u00, u01, u10, u11]";
     throw std::invalid_argument{err.str()};
   }
@@ -104,12 +104,18 @@ void Gates::make_mgate(std::string name,
 void Gates::make_cgate(std::string name,
                       std::string gates,
                        vec_size_t control) {
+  if (control.size() == 0) {
+    sstr err;
+    err << "\'control\' argument must have at least one item";
+    throw std::invalid_argument{err.str()};
+  }
+
   size_t size = gates.size();
 
   for (auto& i : control) {
     if (i >= size) {
       sstr err;
-      err << "Items in \'control\' should be in the range of 0 to"
+      err << "Items in \'control\' should be in the range of 0 to "
           << (size-1);
       throw std::invalid_argument{err.str()};
     }

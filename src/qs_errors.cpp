@@ -30,16 +30,16 @@ using namespace arma;
 void QSystem::flip(char gate, size_t qbit, double p) {
   if (not (gate == 'X' or gate == 'Y' or gate == 'Z')) {
     sstr err;
-    err << "Argument \'gate\' must be equal to \'X\', \'Y\' or \'X\'";
+    err << "\'gate\' argument must be equal to \'X\', \'Y\' or \'X\'";
     throw std::invalid_argument{err.str()};    
   } else if (qbit >= size()) {
     sstr err;
-    err << "Argument \'qbit\' should be in the range of 0 to "
+    err << "\'qbit\' argument should be in the range of 0 to "
         << (size()-1);
     throw std::invalid_argument{err.str()};
   } else if (p < 0 or p > 1) {
     sstr err;
-    err << "Argument \'p\' should be in the range of 0.0 to 1.0";
+    err << "\'p\' argument should be in the range of 0.0 to 1.0";
     throw std::invalid_argument{err.str()};
   }
 
@@ -66,12 +66,12 @@ void QSystem::amp_damping(size_t qbit, double p) {
     throw std::runtime_error{err.str()};
   } else if (qbit >= size()) {
     sstr err;
-    err << "Argument \'qbit\' should be in the range of 0 to "
+    err << "\'qbit\' argument should be in the range of 0 to "
         << (size()-1);
     throw std::invalid_argument{err.str()};
   } else if (p < 0 or p > 1) {
     sstr err;
-    err << "Argument \'p\' should be in the range of 0.0 to 1.0";
+    err << "\'p\' argument should be in the range of 0.0 to 1.0";
     throw std::invalid_argument{err.str()};
   }
 
@@ -92,12 +92,12 @@ void QSystem::dpl_channel(size_t qbit, double p) {
     throw std::runtime_error{err.str()};
   } else if (qbit >= size()) {
     sstr err;
-    err << "Argument \'qbit\' should be in the range of 0 to "
+    err << "\'qbit\' argument should be in the range of 0 to "
         << (size()-1);
     throw std::invalid_argument{err.str()};
   } else if (p < 0 or p > 1) {
     sstr err;
-    err << "Argument \'p\' should be in the range of 0.0 to 1.0";
+    err << "\'p\' argument should be in the range of 0.0 to 1.0";
     throw std::invalid_argument{err.str()};
   }
 
@@ -118,7 +118,7 @@ void QSystem::sum(size_t qbit, vec_str kraus, vec_float p) {
     throw std::runtime_error{err.str()};
   } else if (qbit >= size()) {
     sstr err;
-    err << "Argument \'qbit\' should be in the range of 0 to "
+    err << "\'qbit\' argument should be in the range of 0 to "
         << (size()-1);
     throw std::invalid_argument{err.str()};
   } 

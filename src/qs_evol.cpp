@@ -34,13 +34,13 @@ void QSystem::evol(std::string gate,
                           bool inver) {
   if (qbit >= size()) {
       sstr err;
-      err << "Argument \'qbit\' should be in the range of 0 to "
+      err << "\'qbit\' argument should be in the range of 0 to "
           << (size()-1);
       throw std::invalid_argument{err.str()};
   } else if (count == 0 and qbit+count <= size()) {
       sstr err;
-      err << "Argument \'cout\' should be greater than 0 "
-          << "and qbit+count suld be in the range of 0 to "
+      err << "\'cout\' argument should be greater than 0 "
+          << "and \'qbit+count\' suld be in the range of 0 to "
           << size();
       throw std::invalid_argument{err.str()};
   }
@@ -71,10 +71,14 @@ void QSystem::evol(std::string gate,
 void QSystem::cnot(size_t target, vec_size_t control) {
   if (target >= size()) {
       sstr err;
-      err << "Argument \'target\' should be in the range of 0 to "
+      err << "\'target\' argument should be in the range of 0 to "
           << (size()-1);
       throw std::invalid_argument{err.str()};
-  } 
+  } else if (control.size() == 0) {
+    sstr err;
+    err << "\'control\' argument must have at least one item";
+    throw std::invalid_argument{err.str()};
+  }
   for (auto& i : control) {
     if (i >= size()) {
       sstr err;
@@ -93,12 +97,16 @@ void QSystem::cnot(size_t target, vec_size_t control) {
 void QSystem::cphase(complex phase, size_t target, vec_size_t control) {
   if (target >= size()) {
       sstr err;
-      err << "Argument \'target\' should be in the range of 0 to "
+      err << "\'target\' argument should be in the range of 0 to "
           << (size()-1);
       throw std::invalid_argument{err.str()};
   } else if (std::abs(std::abs(phase) - 1.0) > 1e-14) {
     sstr err;
     err << "abs(phase) must be equal to 1";
+    throw std::invalid_argument{err.str()};
+  } else if (control.size() == 0) {
+    sstr err;
+    err << "\'control\' argument must have at least one item";
     throw std::invalid_argument{err.str()};
   }
   for (auto& i : control) {
@@ -134,9 +142,9 @@ void QSystem::swap(size_t qbit_a, size_t qbit_b) {
 void QSystem::qft(size_t qbegin, size_t qend, bool inver) {
   if (qbegin >= size() or qend > size() or qbegin <= qend) {
       sstr err;
-      err << "Argument \'qbegin\' should be in the "
+      err << "\'qbegin\' argument should be in the "
           << "range of 0 to " << (size()-1)
-          << "and argument \'qend\' should be greater than 0 "
+          << " and argument \'qend\' should be greater than 0 "
           << "and in the range of 0 to " << size();
       throw std::invalid_argument{err.str()};
   }
