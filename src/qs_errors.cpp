@@ -81,7 +81,7 @@ void QSystem::amp_damping(size_t qbit, double p) {
                                              {{0, 0}, {sqrt(1-p), 0}}}}}, qbit);
   sp_cx_mat E1 = make_gate(sp_cx_mat{cx_mat{{{{0, 0}, {sqrt(p), 0}},
                                              {{0, 0}, {0, 0}}}}}, qbit);
-  qbits = E0*qbits*E0 + E1*qbits*E1;
+  qbits = E0*qbits*E0 + E1*qbits*E1.t();
 }
 
 /******************************************************/
