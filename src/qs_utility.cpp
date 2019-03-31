@@ -126,16 +126,6 @@ size_t QSystem::size() {
 }
 
 /******************************************************/
-std::vector<int> QSystem::bits() {
-  std::vector<int> vec;
-  for (size_t i = 0; i < _size; i++)
-    vec.push_back(_bits[i]);
-  for (size_t i = 0; i < an_size; i++)
-    vec.push_back(an_bits[i]);
-  return vec;
-}
-
-/******************************************************/
 PyObject* QSystem::get_qbits() {
   sync();
   qbits.sync();
@@ -188,7 +178,7 @@ void QSystem::set_qbits(vec_size_t row_ind,
 
 /******************************************************/
 void QSystem::change_to(std::string new_state) {
-  if (state != "matrix" and state != "vector") {
+  if (new_state != "matrix" and new_state != "vector") {
     sstr err;
     err << "\'state\' argument must have value " 
         <<  "\"vector\" or \"matrix\", not \""

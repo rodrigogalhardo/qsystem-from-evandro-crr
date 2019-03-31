@@ -94,3 +94,12 @@ void QSystem::measure_all() {
   measure(0, size());
 }
 
+/******************************************************/
+std::vector<int> QSystem::bits() {
+  std::vector<int> vec;
+  for (size_t i = 0; i < _size; i++)
+    vec.push_back(_bits[i]);
+  for (size_t i = 0; i < an_size; i++)
+    vec.push_back(an_bits[i]);
+  return vec;
+}
