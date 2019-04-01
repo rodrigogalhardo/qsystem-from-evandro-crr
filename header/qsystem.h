@@ -29,6 +29,7 @@
 
 class QSystem {
 
+  /* src/qs_utility.cpp */
   struct Gate_aux {
     Gate_aux();
     ~Gate_aux();
@@ -51,6 +52,7 @@ class QSystem {
   enum Bit {NONE, ZERO, ONE};
 
   public:
+    /* src/qs_utility.cpp */
     QSystem(size_t nqbits,
              Gates& gates,
             size_t seed=42,
@@ -58,7 +60,7 @@ class QSystem {
 
     ~QSystem();
     
-    /* evolution */
+    /* src/qs_evol.cpp */
     void            evol(std::string gate,
                               size_t qbit, 
                               size_t count=1,
@@ -68,17 +70,18 @@ class QSystem {
     void            swap(size_t qbit_a, size_t qbit_b);
     void            qft(size_t qbegin, size_t qend, bool inver=false);
     
-    /* measure */
+    /* src/qs_measure.cpp */
     void             measure(size_t qbit, size_t count=1);
     void             measure_all();
+    vec_int          bits();
     
-    /* error channel */
+    /* src/qs_errors.cpp */
     void            flip(char gate, size_t qbit, double p);
     void            amp_damping(size_t qbit, double p);
     void            dpl_channel(size_t qbit, double p);
     void            sum(size_t qbit, vec_str kraus, vec_float p);
 
-    /* utility */
+    /* src/qs_utility.cpp */
     std::string     __str__();
     size_t          size();
     std::string     state();
@@ -88,7 +91,6 @@ class QSystem {
 
     void            change_to(std::string new_state);
 
-    vec_int         bits();
     PyObject*       get_qbits();
     void            set_qbits(vec_size_t row_ind,
                               vec_size_t col_ptr,
@@ -96,15 +98,17 @@ class QSystem {
                                   size_t nqbits,
                              std::string state);
 
-    /* ancilla */
+    /* src/qs_ancillas.cpp */
     void            add_ancillas(size_t nqbits);
     void            rm_ancillas();
 
   private:
+    /* src/qs_evol.cpp */
     void            sync();
     void            sync(size_t qbegin, size_t qend);
     void            clar();
 
+    /* src/qs_make.cpp */
     arma::sp_cx_mat make_gate(arma::sp_cx_mat gate, size_t qbit);
     arma::sp_cx_mat make_cnot(size_t target,
                           vec_size_t control,
@@ -116,12 +120,25 @@ class QSystem {
     arma::sp_cx_mat make_swap(size_t size_n);
     arma::sp_cx_mat make_qft(size_t size_n);
 
+    /* src/qs_utility.cpp */
     Gate_aux&       ops(size_t index);
     arma::sp_cx_mat get_gate(Gate_aux &op);
     cut_pair        cut(size_t &target, vec_size_t &control);
     void            fill(Gate_aux::Tag tag, size_t qbit, size_t size_n);
- 
 
+    /* src/qs_valid.cpp */
+    void            valid_qbit(std::string name, size_t qbit);
+    void            valid_count(size_t qbit, size_t count, size_t size_n=1);
+    void            valid_control(vec_size_t &control);
+    void            valid_phase(complex phase);
+    void            valid_swap(size_t qbit_a, size_t qbit_b);
+    void            valid_range(size_t qbegin, size_t qend);
+    void            valid_gate(char gate);
+    void            valid_p(double p);
+    void            valid_state();
+    void            valid_krau(vec_str &kraus);
+
+    /*--------------------*/
     Gates&           gates;
     size_t          _size;
     std::string     _state;
@@ -130,7 +147,6 @@ class QSystem {
     arma::sp_cx_mat qbits;
     Bit*            _bits;
 
-    /* ancilla */
     size_t          an_size;
     Gate_aux*       an_ops;
     Bit*            an_bits;

@@ -28,18 +28,8 @@ using namespace arma;
 
 /******************************************************/
 void QSystem::measure(size_t qbit, size_t count) {
-  if (qbit >= size()) {
-      sstr err;
-      err << "Argument \'qbit\' should be in the range of 0 to "
-          << (size()-1);
-      throw std::invalid_argument{err.str()};
-  } else if (count == 0 and qbit+count <= size()) {
-      sstr err;
-      err << "Argument \'cout\' should be greater than 0 "
-          << "and qbit+count suld be in the range of 0 to "
-          << size();
-      throw std::invalid_argument{err.str()};
-  }
+  valid_qbit("qibt", qbit);
+  valid_count(qbit, count);
 
   sync();
   count += qbit;

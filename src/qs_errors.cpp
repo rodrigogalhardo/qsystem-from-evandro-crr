@@ -28,20 +28,9 @@ using namespace arma;
 
 /******************************************************/
 void QSystem::flip(char gate, size_t qbit, double p) {
-  if (not (gate == 'X' or gate == 'Y' or gate == 'Z')) {
-    sstr err;
-    err << "\'gate\' argument must be equal to \'X\', \'Y\' or \'X\'";
-    throw std::invalid_argument{err.str()};    
-  } else if (qbit >= size()) {
-    sstr err;
-    err << "\'qbit\' argument should be in the range of 0 to "
-        << (size()-1);
-    throw std::invalid_argument{err.str()};
-  } else if (p < 0 or p > 1) {
-    sstr err;
-    err << "\'p\' argument should be in the range of 0.0 to 1.0";
-    throw std::invalid_argument{err.str()};
-  }
+  valid_gate(gate);
+  valid_qbit("qbit", qbit);
+  valid_p(p);
 
   if (_state == "vector") {
     if (auto pr = double(std::rand())/double(RAND_MAX); p != 0 and pr <= p) 
@@ -54,26 +43,15 @@ void QSystem::flip(char gate, size_t qbit, double p) {
     size_t eyesize = 1ul << size();
     sp_cx_mat E1 = eye<sp_cx_mat>(eyesize, eyesize)*sqrt(1.f-p);
 
-    qbits = E0*qbits*E0 + E1*qbits*E1;
+    qbits = E0*qbits*E0.t() + E1*qbits*E1;
   }
 }
 
 /******************************************************/
 void QSystem::amp_damping(size_t qbit, double p) {
-  if (_state == "vector") {
-    sstr err;
-    err << "\'state\' must be in \"matrix\" to apply this channel";
-    throw std::runtime_error{err.str()};
-  } else if (qbit >= size()) {
-    sstr err;
-    err << "\'qbit\' argument should be in the range of 0 to "
-        << (size()-1);
-    throw std::invalid_argument{err.str()};
-  } else if (p < 0 or p > 1) {
-    sstr err;
-    err << "\'p\' argument should be in the range of 0.0 to 1.0";
-    throw std::invalid_argument{err.str()};
-  }
+  valid_state();
+  valid_qbit("qbit", qbit);
+  valid_p(p);
 
   sync();
 
@@ -86,20 +64,9 @@ void QSystem::amp_damping(size_t qbit, double p) {
 
 /******************************************************/
 void QSystem::dpl_channel(size_t qbit, double p) {
-  if (_state == "vector") {
-    sstr err;
-    err << "\'state\' must be in \"matrix\" to apply this channel";
-    throw std::runtime_error{err.str()};
-  } else if (qbit >= size()) {
-    sstr err;
-    err << "\'qbit\' argument should be in the range of 0 to "
-        << (size()-1);
-    throw std::invalid_argument{err.str()};
-  } else if (p < 0 or p > 1) {
-    sstr err;
-    err << "\'p\' argument should be in the range of 0.0 to 1.0";
-    throw std::invalid_argument{err.str()};
-  }
+  valid_state();
+  valid_qbit("qbit", qbit);
+  valid_p(p);
 
   sync();
 
@@ -107,29 +74,14 @@ void QSystem::dpl_channel(size_t qbit, double p) {
   sp_cx_mat Y = make_gate(gates.get('Y'), qbit);
   sp_cx_mat Z = make_gate(gates.get('Z'), qbit);
   
-  qbits = (1-p)*qbits+(p/3)*(X*qbits*X+Y*qbits*Y+Z*qbits*Z);
+  qbits = (1-p)*qbits+(p/3)*(X*qbits*X+Y*qbits*Y.t()+Z*qbits*Z);
 }
 
 /******************************************************/
 void QSystem::sum(size_t qbit, vec_str kraus, vec_float p) {
-  if (_state == "vector") {
-    sstr err;
-    err << "\'state\' must be in \"matrix\" to apply this channel";
-    throw std::runtime_error{err.str()};
-  } else if (qbit >= size()) {
-    sstr err;
-    err << "\'qbit\' argument should be in the range of 0 to "
-        << (size()-1);
-    throw std::invalid_argument{err.str()};
-  } 
-  size_t ksize = kraus[0].size();
-  for (auto& k : kraus) {
-    if (k.size() != ksize) {
-      sstr err;
-      err << "All \'kraus\' operators must have the same size";
-      throw std::runtime_error{err.str()};
-    }
-  }
+  valid_state();
+  valid_qbit("qbit", qbit);
+  valid_krau(kraus);
     
   sync();
 
