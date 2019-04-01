@@ -34,7 +34,7 @@ qsystem/__init__.py:
 	ln -s ../src/qsystem.py $@
 
 armadillo-code:
-	git clone https://gitlab.com/conradsnicta/armadillo-code.git
+	git clone https://gitlab.com/conradsnicta/armadillo-code.git --branch 9.300.x
 
 install: dist
 	pip install dist/*
