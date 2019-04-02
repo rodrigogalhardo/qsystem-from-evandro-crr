@@ -28,8 +28,13 @@ using namespace arma;
 
 /******************************************************/
 void QSystem::add_ancillas(size_t nqbits) {
-  if (nqbits == 0) 
+  if (nqbits == 0) {
     throw std::invalid_argument{"\'an_num\' argument must be greater than 0"};
+  } else if (an_size != 0) {
+    sstr err;
+    err << "There are already ancillas in the system, you can not add more";
+    throw std::invalid_argument{err.str()};
+  }
 
   sync();
 
