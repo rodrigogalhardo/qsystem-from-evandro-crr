@@ -106,7 +106,7 @@ class QSystem {
     /* src/qs_evol.cpp */
     void            sync();
     void            sync(size_t qbegin, size_t qend);
-    void            clar();
+    void            clear();
 
     /* src/qs_make.cpp */
     arma::sp_cx_mat make_gate(arma::sp_cx_mat gate, size_t qbit);

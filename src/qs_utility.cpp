@@ -164,8 +164,6 @@ void QSystem::set_qbits(vec_size_t row_ind,
                        vec_complex values,
                             size_t nqbits,
                        std::string state) {
-  clar();
-
   qbits = sp_cx_mat(conv_to<uvec>::from(row_ind),
                     conv_to<uvec>::from(col_ptr),
                     cx_vec(values),
@@ -174,6 +172,7 @@ void QSystem::set_qbits(vec_size_t row_ind,
                     
   this->_state = state;
   _size = nqbits;
+  clar();
 }
 
 /******************************************************/
@@ -213,21 +212,10 @@ void QSystem::save(std::string path) {
 }
 
 void QSystem::load(std::string path) {
-  _sync = true;
-  an_size = 0;
-  if (an_ops) {
-    delete an_ops;
-    delete an_bits;
-  }
-  an_ops = nullptr; 
-  an_bits = nullptr;
   qbits.load(path, arma_binary);
   _size = log2(qbits.n_rows);
   _state = qbits.n_cols > 1 ? "matrix" : "vector";
-  delete _ops;
-  delete _bits;
-  _ops = new Gate_aux[_size]();
-  _bits = new Bit[_size]();
+  clar();
 }
 
 

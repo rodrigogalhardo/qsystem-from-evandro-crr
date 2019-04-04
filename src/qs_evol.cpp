@@ -134,14 +134,19 @@ void QSystem::sync(size_t qbegin, size_t qend) {
 }
 
 /******************************************************/
-void QSystem::clar() {
-  delete _ops;
-  _ops = new Gate_aux[_size]();
-  if (an_ops) {
-    delete an_ops;
-    an_ops = new Gate_aux[an_size]();
-  }
-
+void QSystem::clear() {
   _sync = true;
+  an_size = 0;
+  if (an_ops) {
+    delete[] an_ops;
+    delete[] an_bits;
+  }
+  an_ops = nullptr; 
+  an_bits = nullptr;
+
+  delete[] _ops;
+  delete[] _bits;
+  _ops = new Gate_aux[_size]();
+  _bits = new Bit[_size]();
 }
 
