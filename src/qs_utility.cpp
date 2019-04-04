@@ -172,7 +172,7 @@ void QSystem::set_qbits(vec_size_t row_ind,
                     
   this->_state = state;
   _size = nqbits;
-  clar();
+  clear();
 }
 
 /******************************************************/
@@ -215,7 +215,7 @@ void QSystem::load(std::string path) {
   qbits.load(path, arma_binary);
   _size = log2(qbits.n_rows);
   _state = qbits.n_cols > 1 ? "matrix" : "vector";
-  clar();
+  clear();
 }
 
 
