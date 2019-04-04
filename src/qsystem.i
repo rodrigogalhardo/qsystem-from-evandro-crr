@@ -68,10 +68,15 @@ def get_matrix(q):
     from scipy import sparse
     return sparse.csc_matrix(q.get_qbits()[0], q.get_qbits()[1])
  
-def set_matrix(q, m, size, state):
+def set_matrix(q, m):
     from scipy import sparse
+    from math import log2
     m = sparse.csc_matrix(m)
+    if m.shape[0] == m.shape[1]:
+        state = 'matrix'
+    else:
+        state = 'vector'
+    size = int(log2(m.shape[0]))
     q.set_qbits(m.indices.tolist(), m.indptr.tolist(), m.data.tolist(), size, state)
-
 %}
 
