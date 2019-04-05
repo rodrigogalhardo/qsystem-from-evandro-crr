@@ -128,9 +128,11 @@ void Gates::make_cgate(std::string name,
       x |= 1ul << (size-i-1);
     } else if (gates[i] == 'Z') {
       z |= 1ul << (size-i-1);
+    } else if (gates[i] == 'I') {
+      continue;
     } else {
       sstr err;
-      err << "Argument \'gates\' must have only \'Z\' and \'X\'";
+      err << "Argument \'gates\' must have only \'X\', \'Z\' and \'I\'";
       throw std::invalid_argument{err.str()};
     }
   }
