@@ -106,7 +106,10 @@ class QSystem {
     /* src/qs_evol.cpp */
     void            sync();
     void            sync(size_t qbegin, size_t qend);
-    void            clear();
+    Gate_aux&       ops(size_t index);
+    arma::sp_cx_mat get_gate(Gate_aux &op);
+    cut_pair        cut(size_t &target, vec_size_t &control);
+    void            fill(Gate_aux::Tag tag, size_t qbit, size_t size_n);
 
     /* src/qs_make.cpp */
     arma::sp_cx_mat make_gate(arma::sp_cx_mat gate, size_t qbit);
@@ -121,10 +124,7 @@ class QSystem {
     arma::sp_cx_mat make_qft(size_t size_n);
 
     /* src/qs_utility.cpp */
-    Gate_aux&       ops(size_t index);
-    arma::sp_cx_mat get_gate(Gate_aux &op);
-    cut_pair        cut(size_t &target, vec_size_t &control);
-    void            fill(Gate_aux::Tag tag, size_t qbit, size_t size_n);
+    void            clear();
 
     /*--------------------*/
     Gates&           gates;

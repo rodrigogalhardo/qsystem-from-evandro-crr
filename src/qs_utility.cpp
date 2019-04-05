@@ -218,68 +218,20 @@ void QSystem::load(std::string path) {
   clear();
 }
 
-
 /******************************************************/
-QSystem::Gate_aux& QSystem::ops(size_t index) {
-  return index < _size? _ops[index] : an_ops[index-_size];
-}
+void QSystem::clear() {
+  _sync = true;
+  an_size = 0;
+  if (an_ops) {
+    delete[] an_ops;
+    delete[] an_bits;
+  }
+  an_ops = nullptr; 
+  an_bits = nullptr;
 
-
-/******************************************************/
-arma::sp_cx_mat QSystem::get_gate(Gate_aux &op) {
-  auto get = [&]() {
-      switch (op.tag) {
-      case Gate_aux::GATE_1:
-        return gates.get(std::get<char>(op.data));
-      case Gate_aux::GATE_N:
-        return gates.mget(std::get<std::string>(op.data));
-      case Gate_aux::CNOT:
-        return make_cnot(std::get<cnot_pair>(op.data).first,
-                         std::get<cnot_pair>(op.data).second,
-                         op.size);
-      case Gate_aux::CPHASE:
-        return make_cphase(std::get<0>(std::get<cph_tuple>(op.data)),
-                           std::get<1>(std::get<cph_tuple>(op.data)),
-                           std::get<2>(std::get<cph_tuple>(op.data)),
-                           op.size);
-      case Gate_aux::SWAP:
-        return make_swap(op.size);
-      default:
-        return make_qft(op.size);
-      }
-  };
-
-  if (op.inver) 
-    return get().t();
-  else 
-    return get();
-}
-
-/******************************************************/
-cut_pair QSystem::cut(size_t &target, vec_size_t &control) {
-  size_t maxq = std::max(target,
-                         *std::max_element(control.begin(),
-                                           control.end()));
-  size_t minq = std::min(target,
-                         *std::min_element(control.begin(),
-                                           control.end()));
-  size_t size_n = maxq-minq+1;
-  for (auto &i : control) 
-    i -= minq;
-  target -= minq;
-  return std::make_pair(size_n, minq);
-}
-
-/******************************************************/
-void QSystem::fill(Gate_aux::Tag tag, size_t qbit, size_t size_n) {
-  sync(qbit, qbit+size_n);
-
-  ops(qbit).tag = tag;
-  ops(qbit).size = size_n;
- 
-  for (size_t i = qbit+1; i < qbit+size_n; i++)
-    ops(i).tag = tag;
-
-  _sync = false;
+  delete[] _ops;
+  delete[] _bits;
+  _ops = new Gate_aux[_size]();
+  _bits = new Bit[_size]();
 }
 
