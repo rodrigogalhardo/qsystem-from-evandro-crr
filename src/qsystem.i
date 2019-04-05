@@ -52,10 +52,12 @@ using size_t = long unsigned;
 %typemap(out) std::vector<int> QSystem::bits %{
   $result = PyList_New($1.size());
   for (size_t i = 0; i < $1.size(); i++) {
-    if ($1[i] == 0) 
+    if ($1[i] == 0) {
+      Py_INCREF(Py_None);
       PyList_SetItem($result, i, Py_None);
-    else 
+    } else { 
       PyList_SetItem($result, i, PyLong_FromLong($1[i]-1));
+    }
   }
 %}
 
