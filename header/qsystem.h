@@ -212,12 +212,12 @@ inline void QSystem::valid_swap(size_t qbit_a, size_t qbit_b) {
 
 /******************************************************/
 inline void QSystem::valid_range(size_t qbegin, size_t qend) {
-  if (qbegin >= size() or qend > size() or qbegin <= qend) {
+  if (qbegin >= size() or qend > size() or qbegin >= qend) {
       sstr err;
       err << "\'qbegin\' argument should be in the "
           << "range of 0 to " << (size()-1)
-          << " and argument \'qend\' should be greater than 0 "
-          << "and in the range of 0 to " << size();
+          << " and argument \'qend\' should be greater than \'qbegin\' "
+          << "and in the range of 1 to " << size();
       throw std::invalid_argument{err.str()};
   }
 }
