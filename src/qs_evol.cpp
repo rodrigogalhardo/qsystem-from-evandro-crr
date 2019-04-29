@@ -140,7 +140,7 @@ QSystem::Gate_aux& QSystem::ops(size_t index) {
 
 
 /******************************************************/
-arma::sp_cx_mat QSystem::get_gate(Gate_aux &op) {
+sp_cx_mat QSystem::get_gate(Gate_aux &op) {
   auto get = [&]() {
       switch (op.tag) {
       case Gate_aux::GATE_1:
