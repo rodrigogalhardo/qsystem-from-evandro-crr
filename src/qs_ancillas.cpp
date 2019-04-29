@@ -70,8 +70,10 @@ void QSystem::rm_ancillas() {
     auto sizet = 1ul << (size()-1);
     sp_cx_mat qbitst{sizet, sizet};
 
-    for (auto i = qbits.begin(); i != qbits.end(); ++i) 
-      qbitst(i.row() >> 1, i.col() >> 1) += *i;
+    for (auto i = qbits.begin(); i != qbits.end(); ++i) {
+      if ((i.row() % 2) == (i.col() % 2))
+        qbitst(i.row() >> 1, i.col() >> 1) += *i;
+    }
 
     return qbitst;
   };
