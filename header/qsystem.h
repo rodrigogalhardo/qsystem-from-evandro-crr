@@ -27,9 +27,9 @@
 #include <Python.h>
 #include <variant>
 
+//! Quantum circuit simulator class
 class QSystem {
 
-  /* src/qs_utility.cpp */
   struct Gate_aux {
     Gate_aux();
     ~Gate_aux();
@@ -52,7 +52,17 @@ class QSystem {
   enum Bit {NONE, ZERO, ONE};
 
   public:
-    /* src/qs_utility.cpp */
+    //! Constructor 
+    /*!
+     * All qubits are initialized in the state \f$\left|0\right>\f$.
+     *
+     * \param nqbits number of qubits in the system
+     * \param gates instance of class Gates that holds the gates used in the
+     * method QSystem::evol
+     * \param seed for the pseudorandom number generator
+     * \param state representation of the system, use `"vector"` for vector
+     * state and `"matrix"` for density matrix
+     */
     QSystem(size_t nqbits,
              Gates& gates,
             size_t seed=42,
@@ -60,17 +70,73 @@ class QSystem {
 
     ~QSystem();
     
-    /* src/qs_evol.cpp */
+    //! Apply a quantum gate
+    /*!
+     * The gate will be applied in from qubits `qbit` to `qbit*cout*(size of
+     * the gate)`. If `gate` parameter is just one character long, the size of
+     * the gate is necessarily one.
+     *
+     * \param gate name of the gate that will be user 
+     * \param qbit qubit affected by the gate
+     * \param count number of successive repetitions of the gate
+     * \param inver if true, apply the inverse quantum gate
+     * \sa QSystem::cnot QSystem::cphase QSystem::qft QSystem::swap
+     */
     void            evol(std::string gate,
                               size_t qbit, 
                               size_t count=1,
                                 bool inver=false);
+    //! Apply a controlled not 
+    /*!
+     * Apply a not in the `target` qubit if all the `control` qubits are in the
+     * state \f$\left|1\right>\f$.
+     *
+     * \param target target qubit
+     * \param control list of control qubits
+     * \sa QSystem::evol QSystem::cphase QSystem::qft QSystem::swap
+     */
     void            cnot(size_t target, vec_size_t control);
+
+    //! Apply a controlled phase
+    /*!
+     * Apply \f$\begin{bmatrix}1&0\\0&e^\phi\end{bmatrix}\f$, whare
+     * \f$e^\phi\f$ = `phase`, in the `target` qubit if all the `control`
+     * qubits are in the state \f$\left|1\right>\f$.
+     *
+     * \param phase \f$e^\phi\f$ value
+     * \param target target qubit
+     * \param control list of control qubits
+     * \sa QSystem::evol QSystem::cnot QSystem::qft QSystem::swap
+     */
     void            cphase(complex phase, size_t target, vec_size_t control);
-    void            swap(size_t qbit_a, size_t qbit_b);
+
+    //! Apply a quantum Fourier transformation
+    /*!
+     * Apply the QFT in the range of qubits (`qbegin`, `qend`].
+     *
+     * \param qbegin first qubit affected 
+     * \param qend last qubit affected +1
+     * \sa QSystem::evol QSystem::cnot QSystem::cphase QSystem::swap
+     */
     void            qft(size_t qbegin, size_t qend, bool inver=false);
+
+    //! Swap two qubit
+    /*!
+     * \param qbit_a qubit that gonna be swapped with `qbit_b`
+     * \param qbit_a qubit that gonna be swapped with `qbit_a`
+     * \sa QSystem::evol QSystem::cnot QSystem::cphase QSystem::qft
+     */
+    void            swap(size_t qbit_a, size_t qbit_b);
     
-    /* src/qs_measure.cpp */
+    //! Measure qubits in the computational base
+    /*!
+     * Measure qubits from `qbit` to `qbit*cout`. All the measurements results
+     * are assessable throw the QSystem::bits method.
+     *
+     * \param qbit qubit affected by the measurement
+     * \param count number qubits measured from `qbit`
+     * \sa QSystem::measure_all QSystem::bits
+     */
     void             measure(size_t qbit, size_t count=1);
     void             measure_all();
     vec_int          bits();
@@ -139,7 +205,6 @@ class QSystem {
     Gate_aux*       an_ops;
     Bit*            an_bits;
 
-    /* src/qs_valid.cpp */
     inline void     valid_qbit(std::string name, size_t qbit);
     inline void     valid_count(size_t qbit, size_t count, size_t size_n=1);
     inline void     valid_control(vec_size_t &control);
