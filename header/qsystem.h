@@ -27,7 +27,7 @@
 #include <Python.h>
 #include <variant>
 
-//! Quantum circuit simulator class
+//! Quantum circuit simulator class.
 class QSystem {
 
   struct Gate_aux {
@@ -56,11 +56,11 @@ class QSystem {
     /*!
      * All qubits are initialized in the state \f$\left|0\right>\f$.
      *
-     * \param nqbits number of qubits in the system
+     * \param nqbits number of qubits in the system.
      * \param gates instance of class Gates that holds the gates used in the
-     * method QSystem::evol
-     * \param seed for the pseudorandom number generator
-     * \param state representation of the system, use `"vector"` for vector
+     * method QSystem::evol.
+     * \param seed for the pseudorandom number generator.
+     * \param state representation of the system, use `"vector"` for vector.
      * state and `"matrix"` for density matrix
      */
     QSystem(size_t nqbits,
@@ -76,10 +76,10 @@ class QSystem {
      * the gate)`. If `gate` parameter is just one character long, the size of
      * the gate is necessarily one.
      *
-     * \param gate name of the gate that will be user 
-     * \param qbit qubit affected by the gate
-     * \param count number of successive repetitions of the gate
-     * \param inver if true, apply the inverse quantum gate
+     * \param gate name of the gate that will be user.
+     * \param qbit qubit affected by the gate.
+     * \param count number of successive repetitions of the gate.
+     * \param inver if true, apply the inverse quantum gate.
      * \sa QSystem::cnot QSystem::cphase QSystem::qft QSystem::swap
      */
     void            evol(std::string gate,
@@ -91,8 +91,8 @@ class QSystem {
      * Apply a not in the `target` qubit if all the `control` qubits are in the
      * state \f$\left|1\right>\f$.
      *
-     * \param target target qubit
-     * \param control list of control qubits
+     * \param target target qubit.
+     * \param control list of control qubits.
      * \sa QSystem::evol QSystem::cphase QSystem::qft QSystem::swap
      */
     void            cnot(size_t target, vec_size_t control);
@@ -103,9 +103,9 @@ class QSystem {
      * \f$e^\phi\f$ = `phase`, in the `target` qubit if all the `control`
      * qubits are in the state \f$\left|1\right>\f$.
      *
-     * \param phase \f$e^\phi\f$ value
-     * \param target target qubit
-     * \param control list of control qubits
+     * \param phase \f$e^\phi\f$ value.
+     * \param target target qubit.
+     * \param control list of control qubits.
      * \sa QSystem::evol QSystem::cnot QSystem::qft QSystem::swap
      */
     void            cphase(complex phase, size_t target, vec_size_t control);
@@ -114,16 +114,16 @@ class QSystem {
     /*!
      * Apply the QFT in the range of qubits (`qbegin`, `qend`].
      *
-     * \param qbegin first qubit affected 
-     * \param qend last qubit affected +1
+     * \param qbegin first qubit affected. 
+     * \param qend last qubit affected +1.
      * \sa QSystem::evol QSystem::cnot QSystem::cphase QSystem::swap
      */
     void            qft(size_t qbegin, size_t qend, bool inver=false);
 
     //! Swap two qubit
     /*!
-     * \param qbit_a qubit that gonna be swapped with `qbit_b`
-     * \param qbit_a qubit that gonna be swapped with `qbit_a`
+     * \param qbit_a qubit that gonna be swapped with `qbit_b`.
+     * \param qbit_a qubit that gonna be swapped with `qbit_a`.
      * \sa QSystem::evol QSystem::cnot QSystem::cphase QSystem::qft
      */
     void            swap(size_t qbit_a, size_t qbit_b);
@@ -133,21 +133,109 @@ class QSystem {
      * Measure qubits from `qbit` to `qbit*cout`. All the measurements results
      * are assessable throw the QSystem::bits method.
      *
-     * \param qbit qubit affected by the measurement
-     * \param count number qubits measured from `qbit`
+     * \param qbit qubit affected by the measurement.
+     * \param count number qubits measured from `qbit`.
      * \sa QSystem::measure_all QSystem::bits
      */
     void             measure(size_t qbit, size_t count=1);
+
+    //! Measure all qubits in the computational base
+    /*!
+     * The measurements results are assessable throw the QSystem::bits method.
+     * \sa QSystem::measure QSystem::bits
+     */
     void             measure_all();
+
+    //! Get the measurements results
+    /*! 
+     * The measurements results are stored in a list. Whare the n-th item is
+     * the measurement result of the qubit n. If the n-th qubits has never been
+     * measured it's value is `None`.
+     *
+     * \return List of the measurement result.
+     * \sa QSystem::measure QSystem::measure_all
+     */
     vec_int          bits();
     
-    /* src/qs_errors.cpp */
+    //! Apply a bit, phase or bit-phase flip error
+    /*!
+     * Apply the Kraus operator
+     * \f[
+     *    E_0 = \sqrt{p}\sigma\\
+     *    E_1 = \sqrt{1-p}I,
+     * \f]
+     * whare \f$\sigma\f$ is \f$\begin{bmatrix}1&0\\0&1\end{bmatrix}\f$ if
+     * `gate` is ```'X'```,  \f$\begin{bmatrix}1&0\\0&1\end{bmatrix}\f$ if
+     * `gate` is ```'Z'``` or \f$\begin{bmatrix}1&0\\0&-1\end{bmatrix}\f$ if
+     * `gate` is ```'Y'```.
+     * 
+     * \param gate use ```'X'``` for bit flip, ```'Z'``` for phase flip 
+     * or ```'Y'``` for bit-phase flip.
+     * \param qbit qubit effected by the error.
+     * \param p probability of the error occur.
+     * \sa QSystem::amp_damping QSystem::dpl_channel QSystem::sum
+     */
     void            flip(char gate, size_t qbit, double p);
+
+    //! Apply an amplitude damping channel error
+    /*!
+     * Apply the Kraus operator
+     * \f[
+     *    E_0 = \begin{bmatrix}1&0\\0&\sqrt{1-p}\end{bmatrix}\\
+     *    E_1 = \begin{bmatrix}0&0\\ \sqrt{p}&0\end{bmatrix},
+     * \f]
+     *
+     * The system must be in density matrix representation to use this method,
+     * otherwise you can use the flow code to achieve a similar result:
+     * ```python
+     * def amp_damping(q, qbit, p):
+     *    from random import choices
+     *    if choices([True, False], weights=[p, 1-p])[0]:
+     *        q.measure(qbit)
+     *        if q.bits[qbit] == 1:
+     *            q.evol('X', qbit)
+     * ```
+     *
+     * \sa QSystem::flip QSystem::dpl_channel QSystem::sum
+     */
     void            amp_damping(size_t qbit, double p);
+
+    //! Apply a depolarization channel error
+    /*!
+     * Apply the operator
+     * \f[
+     *    \mathcal{E}(\rho) = \left(1-{3p\over4}\right)\rho
+     *    +{p\over4}(X\rho X+Y\rho Y+Z\rho Z),
+     * \f]
+     * that takes the qubit to the maximally mixed state with probability `p`.
+     *
+     * The system must be in density matrix representation to use this method.
+     *
+     * \param qbit qubit effected by the error.
+     * \param p probability of the error occur.
+     * \sa QSystem::flip QSystem::amp_damping QSystem::sum
+     */
     void            dpl_channel(size_t qbit, double p);
+  
+    //! Apply a sum operator
+    /*!
+     * To apply some Kraus operator like
+     * \f[
+     *    E_1 = {\sqrt{p_1}} (U_{11}\otimes\dots\otimes U_{1n})\\
+     *    E_2 = {\sqrt{p_2}} (U_{21}\otimes\dots\otimes U_{2n})\\
+     *    \vdots\\
+     *    E_m = {\sqrt{p_m}} (U_{m1}\otimes\dots\otimes U_{mn}),
+     * \f]
+     * create two list:
+     * * `kraus` = [\f$U_{11}\otimes\dots\otimes U_{1n},\,
+     * U_{21}\otimes\dots\otimes U_{2n},\, \dots,\, U_{m1}\otimes\dots\otimes
+     * U_{mn}\f$] and 
+     * * `p` = [\f$p_1,\,p_2,\,\dots,\,p_m\f$]
+     *
+     * \sa QSystem::flip QSystem::amp_damping QSystem::dpl_channel
+     */
     void            sum(size_t qbit, vec_str kraus, vec_float p);
 
-    /* src/qs_utility.cpp */
     std::string     __str__();
     size_t          size();
     std::string     state();
@@ -164,7 +252,6 @@ class QSystem {
                                   size_t nqbits,
                              std::string state);
 
-    /* src/qs_ancillas.cpp */
     void            add_ancillas(size_t nqbits);
     void            rm_ancillas();
 
