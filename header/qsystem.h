@@ -82,10 +82,10 @@ class QSystem {
      * \param inver if true, apply the inverse quantum gate.
      * \sa QSystem::cnot QSystem::cphase QSystem::qft QSystem::swap
      */
-    void            evol(std::string gate,
-                              size_t qbit, 
-                              size_t count=1,
-                                bool inver=false);
+    void evol(std::string gate,
+                   size_t qbit, 
+                   size_t count=1,
+                     bool inver=false);
     //! Apply a controlled not 
     /*!
      * Apply a not in the `target` qubit if all the `control` qubits are in the
@@ -95,7 +95,7 @@ class QSystem {
      * \param control list of control qubits.
      * \sa QSystem::evol QSystem::cphase QSystem::qft QSystem::swap
      */
-    void            cnot(size_t target, vec_size_t control);
+    void cnot(size_t target, vec_size_t control);
 
     //! Apply a controlled phase
     /*!
@@ -108,7 +108,7 @@ class QSystem {
      * \param control list of control qubits.
      * \sa QSystem::evol QSystem::cnot QSystem::qft QSystem::swap
      */
-    void            cphase(complex phase, size_t target, vec_size_t control);
+    void cphase(complex phase, size_t target, vec_size_t control);
 
     //! Apply a quantum Fourier transformation
     /*!
@@ -118,7 +118,7 @@ class QSystem {
      * \param qend last qubit affected +1.
      * \sa QSystem::evol QSystem::cnot QSystem::cphase QSystem::swap
      */
-    void            qft(size_t qbegin, size_t qend, bool inver=false);
+    void qft(size_t qbegin, size_t qend, bool inver=false);
 
     //! Swap two qubit
     /*!
@@ -126,7 +126,7 @@ class QSystem {
      * \param qbit_a qubit that gonna be swapped with `qbit_a`.
      * \sa QSystem::evol QSystem::cnot QSystem::cphase QSystem::qft
      */
-    void            swap(size_t qbit_a, size_t qbit_b);
+    void swap(size_t qbit_a, size_t qbit_b);
     
     //! Measure qubits in the computational base
     /*!
@@ -137,14 +137,14 @@ class QSystem {
      * \param count number qubits measured from `qbit`.
      * \sa QSystem::measure_all QSystem::bits
      */
-    void             measure(size_t qbit, size_t count=1);
+    void measure(size_t qbit, size_t count=1);
 
     //! Measure all qubits in the computational base
     /*!
      * The measurements results are assessable throw the QSystem::bits method.
      * \sa QSystem::measure QSystem::bits
      */
-    void             measure_all();
+    void measure_all();
 
     //! Get the measurements results
     /*! 
@@ -155,7 +155,7 @@ class QSystem {
      * \return List of the measurement result.
      * \sa QSystem::measure QSystem::measure_all
      */
-    vec_int          bits();
+    vec_int bits();
     
     //! Apply a bit, phase or bit-phase flip error
     /*!
@@ -175,7 +175,7 @@ class QSystem {
      * \param p probability of the error occur.
      * \sa QSystem::amp_damping QSystem::dpl_channel QSystem::sum
      */
-    void            flip(char gate, size_t qbit, double p);
+    void flip(char gate, size_t qbit, double p);
 
     //! Apply an amplitude damping channel error
     /*!
@@ -198,7 +198,7 @@ class QSystem {
      *
      * \sa QSystem::flip QSystem::dpl_channel QSystem::sum
      */
-    void            amp_damping(size_t qbit, double p);
+    void amp_damping(size_t qbit, double p);
 
     //! Apply a depolarization channel error
     /*!
@@ -215,7 +215,7 @@ class QSystem {
      * \param p probability of the error occur.
      * \sa QSystem::flip QSystem::amp_damping QSystem::sum
      */
-    void            dpl_channel(size_t qbit, double p);
+    void dpl_channel(size_t qbit, double p);
   
     //! Apply a sum operator
     /*!
@@ -226,34 +226,153 @@ class QSystem {
      *    \vdots\\
      *    E_m = {\sqrt{p_m}} (U_{m1}\otimes\dots\otimes U_{mn}),
      * \f]
-     * create two list:
+     * pass the follow parameters
      * * `kraus` = [\f$U_{11}\otimes\dots\otimes U_{1n},\,
      * U_{21}\otimes\dots\otimes U_{2n},\, \dots,\, U_{m1}\otimes\dots\otimes
      * U_{mn}\f$] and 
      * * `p` = [\f$p_1,\,p_2,\,\dots,\,p_m\f$]
      *
+     * The system must be in density matrix representation to use this method,
+     * otherwise you can use the flow code to achieve a similar result:
+     * ```python
+     * def sum(q, qbit, kraus, p):
+     *     from random import choices
+     *     aux = 0
+     *     for gate in choices(kraus, weights=p)[0]:
+     *         q.evol(gate, qbit+aux)
+     *         aux += 1
+     * ```
+     *
+     * \param qbit first qubit effected by the error.
+     * \param kraus Kraus operators list.
+     * \param p probability list.
      * \sa QSystem::flip QSystem::amp_damping QSystem::dpl_channel
      */
-    void            sum(size_t qbit, vec_str kraus, vec_float p);
+    void sum(size_t qbit, vec_str kraus, vec_float p);
 
-    std::string     __str__();
-    size_t          size();
-    std::string     state();
+    //! Get system state in a string
+    /*!
+     *  This method is used in Python to cast a instance to `str`.
+     *
+     * \return String with the system state.
+     * \sa QSystem::size QSystem::state
+     */
+    std::string __str__();
 
-    void            save(std::string path);
-    void            load(std::string path);
+    //! Get the number of qubits
+    /*!
+     * The ancillary qubits are include in the count.
+     *
+     * \return Number of qubits in the system.
+     * \sa QSystem::state 
+     */
+    size_t size();
 
-    void            change_to(std::string new_state);
+    //! Get the system representation
+    /*!
+     * \return `"vector"` for vector representation and `"matrix"` for density
+     * matrix.
+     *
+     * \sa QSystem::size QSystem::change_to
+     */
+    std::string state();
 
-    PyObject*       get_qbits();
-    void            set_qbits(vec_size_t row_ind,
-                              vec_size_t col_ptr,
-                             vec_complex values,
-                                  size_t nqbits,
-                             std::string state);
+    //! Save the quantum state in a file
+    /*!
+     * The file is in a machine dependent binary format defined by the library
+     * Armadillo.
+     *
+     * \param path to the file that will be created.
+     * \sa QSystem::load
+     */
+    void save(std::string path);
 
-    void            add_ancillas(size_t nqbits);
-    void            rm_ancillas();
+    //! Load the quantum state from a file
+    /*!
+     * When load, all qubits are set to non-ancillary.
+     *
+     * \param path to the file that will be loaded.
+     * \sa QSystem::save
+     */
+    void load(std::string path);
+
+    //! Change the system representation
+    /*!
+     * The change from vector representation to density matrix is done by
+     * \f$\left|\psi\right> \rightarrow
+     * \left|\psi\right>\mkern-7mu\left<\psi\right|\f$. But, in the change from
+     * density matrix to vector representation, just the measurement
+     * probability is maintained. 
+     *
+     * \param new_state use "vector" to change vector representation a
+     * \sa QSystem::state
+     */
+    void change_to(std::string new_state);
+
+    //! Get the matrix of the quantum system 
+    /*!
+     * This method is used in Python by the non-member function `get_matrix`.
+     * ```python
+     * def get_matrix(q):
+     *    from scipy import sparse
+     *    return sparse.csc_matrix(q.get_qbits()[0], q.get_qbits()[1])
+     * ```
+     *
+     * \return Tuple used to initialize a scipy space matrix.
+     * \sa QSystem::set_qbits
+     */
+    PyObject* get_qbits();
+
+    //! Change the matrix of the quantum system
+    /*!
+     * This method is used in Python by the non-member function `set_matrix`.
+     * ```python
+     * def set_matrix(q, m):
+     *     from scipy import sparse
+     *     from math import log2
+     *     m = sparse.csc_matrix(m)
+     *     if m.shape[0] == m.shape[1]:
+     *         state = 'matrix'
+     *     else:
+     *         state = 'vector'
+     *     size = int(log2(m.shape[0]))
+     *     q.set_qbits(m.indices.tolist(), m.indptr.tolist(), m.data.tolist(), size, state)
+     * ```
+     * 
+     * \param row_ind row indices.
+     * \param col_ptr column pointers.
+     * \param value non-zero values.
+     * \param nqbits number of qubits.
+     * \param state representation.
+     * \sa QSystem::get_qbits
+     */
+    void set_qbits(vec_size_t row_ind,
+                   vec_size_t col_ptr,
+                  vec_complex values,
+                       size_t nqbits,
+                  std::string state);
+
+    //! Add ancillary qubits
+    /*!
+     * The ancillaries qubits are added to the end of the system and can be used in 
+     * any method.
+     *
+     * \param nqbits number of ancillas added.
+     * \sa QSystem::rm_ancillas
+     */
+    void add_ancillas(size_t nqbits);
+
+    //! Remove all ancillary qubits
+    /*!
+     * If the state is in vector representation the ancillas are measured
+     * before been removed. If the state is in density matrix representation,
+     * the ancillas are removed by a partial trace operation, without been
+     * measured.
+     *
+     * \param nqbits number of ancillas added.
+     * \sa QSystem::rm_ancillas
+     */
+    void rm_ancillas();
 
   private:
     /* src/qs_evol.cpp */
