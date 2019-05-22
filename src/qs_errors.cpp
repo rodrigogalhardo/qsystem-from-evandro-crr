@@ -34,11 +34,11 @@ void QSystem::flip(char gate, size_t qbit, double p) {
 
   if (_state == "vector") {
     if (auto pr = double(std::rand())/double(RAND_MAX); p != 0 and pr <= p) 
-      evol(std::string{gate}, qbit);
+      evol(gate, qbit);
 
   } else if (_state == "matrix") {
     sync();
-    sp_cx_mat E0 = make_gate(gates.get(gate), qbit)*sqrt(p);
+    sp_cx_mat E0 = make_gate(gates[gate], qbit)*sqrt(p);
 
     size_t eyesize = 1ul << size();
     sp_cx_mat E1 = eye<sp_cx_mat>(eyesize, eyesize)*sqrt(1.f-p);
@@ -70,9 +70,9 @@ void QSystem::dpl_channel(size_t qbit, double p) {
 
   sync();
 
-  sp_cx_mat X = make_gate(gates.get('X'), qbit);
-  sp_cx_mat Y = make_gate(gates.get('Y'), qbit);
-  sp_cx_mat Z = make_gate(gates.get('Z'), qbit);
+  sp_cx_mat X = make_gate(gates['X'], qbit);
+  sp_cx_mat Y = make_gate(gates['Y'], qbit);
+  sp_cx_mat Z = make_gate(gates['Z'], qbit);
   
   qbits = (1-p)*qbits+(p/3)*(X*qbits*X+Y*qbits*Y.t()+Z*qbits*Z);
 }
@@ -88,9 +88,9 @@ void QSystem::sum(size_t qbit, vec_str kraus, vec_float p) {
   sp_cx_mat qbits_tmp{qbits.n_rows, qbits.n_cols};
 
   for (size_t i = 0; i < kraus.size(); ++i) {
-    sp_cx_mat E = gates.get(kraus[i][0]);
+    sp_cx_mat E = gates[kraus[i][0]];
     for (size_t j = 1; j < kraus[i].size(); ++j)
-      E = kron(E, gates.get(kraus[i][j]));
+      E = kron(E, gates[kraus[i][j]]);
     E = make_gate(E, qbit);
     
     qbits_tmp +=  p[i]*(E*qbits*E.t());

@@ -23,9 +23,9 @@
  */                                                                               
 
 #pragma once
-#include "gates.h"
-#include <Python.h>
+#include "gate.h"
 #include <variant>
+#include <map>
 
 //! Quantum circuit simulator class.
 class QSystem {
@@ -37,11 +37,13 @@ class QSystem {
     bool busy();
 
     enum Tag {GATE_1, GATE_N,
-              CNOT, CPHASE,
+              R, CNOT, CPHASE,
               SWAP, QFT} tag;
 
     std::variant<char,
-                 std::string,
+                 r_pair, 
+                 str,
+                 mat_ptr,
                  cnot_pair,
                  cph_tuple> data;
 
@@ -57,16 +59,13 @@ class QSystem {
      * All qubits are initialized in the state \f$\left|0\right>\f$.
      *
      * \param nqbits number of qubits in the system.
-     * \param gates instance of class Gates that holds the gates used in the
-     * method QSystem::evol.
      * \param seed for the pseudorandom number generator.
      * \param state representation of the system, use `"vector"` for vector.
      * state and `"matrix"` for density matrix
      */
     QSystem(size_t nqbits,
-             Gates& gates,
             size_t seed=42,
-       std::string state="vector");
+       str state="vector");
 
     ~QSystem();
     
@@ -82,10 +81,19 @@ class QSystem {
      * \param inver if true, apply the inverse quantum gate.
      * \sa QSystem::cnot QSystem::cphase QSystem::qft QSystem::swap
      */
-    void evol(std::string gate,
-                   size_t qbit, 
-                   size_t count=1,
-                     bool inver=false);
+    void evol(char gate,
+            size_t qbit, 
+            size_t count=1,
+              bool inver=false);
+
+    //! Rotate a qubit in X, Y or Z axis
+    void r(char axis,
+         double angle,
+         size_t qbit, 
+         size_t count=1);
+
+    void apply(gate::Gate gate, size_t qbit, size_t count=1, bool inver=false);
+
     //! Apply a controlled not 
     /*!
      * Apply a not in the `target` qubit if all the `control` qubits are in the
@@ -257,7 +265,7 @@ class QSystem {
      * \return String with the system state.
      * \sa QSystem::size QSystem::state
      */
-    std::string __str__();
+    str __str__();
 
     //! Get the number of qubits
     /*!
@@ -275,7 +283,7 @@ class QSystem {
      *
      * \sa QSystem::size QSystem::change_to
      */
-    std::string state();
+    str state();
 
     //! Save the quantum state in a file
     /*!
@@ -285,7 +293,7 @@ class QSystem {
      * \param path to the file that will be created.
      * \sa QSystem::load
      */
-    void save(std::string path);
+    void save(str path);
 
     //! Load the quantum state from a file
     /*!
@@ -294,7 +302,7 @@ class QSystem {
      * \param path to the file that will be loaded.
      * \sa QSystem::save
      */
-    void load(std::string path);
+    void load(str path);
 
     //! Change the system representation
     /*!
@@ -307,7 +315,7 @@ class QSystem {
      * \param new_state use "vector" to change vector representation a
      * \sa QSystem::state
      */
-    void change_to(std::string new_state);
+    void change_to(str new_state);
 
     //! Get the matrix of the quantum system 
     /*!
@@ -350,7 +358,7 @@ class QSystem {
                    vec_size_t col_ptr,
                   vec_complex values,
                        size_t nqbits,
-                  std::string state);
+                  str state);
 
     //! Add ancillary qubits
     /*!
@@ -385,6 +393,7 @@ class QSystem {
 
     /* src/qs_make.cpp */
     arma::sp_cx_mat make_gate(arma::sp_cx_mat gate, size_t qbit);
+    arma::sp_cx_mat make_r(char axis, double angle);
     arma::sp_cx_mat make_cnot(size_t target,
                           vec_size_t control,
                               size_t size_n);
@@ -399,9 +408,8 @@ class QSystem {
     void            clear();
 
     /*--------------------*/
-    Gates&           gates;
     size_t          _size;
-    std::string     _state;
+    str     _state;
     Gate_aux*       _ops;
     bool            _sync;
     arma::sp_cx_mat qbits;
@@ -411,7 +419,25 @@ class QSystem {
     Gate_aux*       an_ops;
     Bit*            an_bits;
 
-    inline void     valid_qbit(std::string name, size_t qbit);
+    std::map<char, arma::sp_cx_mat> gates{
+      {'I', arma::sp_cx_mat{arma::cx_mat{{{{1,0}, {0,0}},
+                                          {{0,0}, {1,0}}}}}},
+      {'X', arma::sp_cx_mat{arma::cx_mat{{{{0,0}, {1,0}},
+                                          {{1,0}, {0,0}}}}}},
+      {'Y', arma::sp_cx_mat{arma::cx_mat{{{{0,0}, {0,-1}},
+                                          {{0,1}, {0,0}}}}}},
+      {'Z', arma::sp_cx_mat{arma::cx_mat{{{{1,0}, {0,0}},
+                                          {{0,0}, {-1,0}}}}}},
+      {'H', arma::sp_cx_mat{(1/sqrt(2))*arma::cx_mat{{{{1,0}, {1,0}},
+                                                      {{1,0}, {-1,0}}}}}},
+      {'S', arma::sp_cx_mat{arma::cx_mat{{{{1,0}, {0,0}},
+                                          {{0,0}, {0,1}}}}}},
+      {'T', arma::sp_cx_mat{arma::cx_mat{{{{1,0}, {0,0}},
+                                          {{0,0}, {1/sqrt(2),1/sqrt(2)}}}}}},
+    };
+
+
+    inline void     valid_qbit(str name, size_t qbit);
     inline void     valid_count(size_t qbit, size_t count, size_t size_n=1);
     inline void     valid_control(vec_size_t &control);
     inline void     valid_phase(complex phase);
@@ -425,7 +451,7 @@ class QSystem {
 };
 
 /******************************************************/
-inline void QSystem::valid_qbit(std::string name, size_t qbit) {
+inline void QSystem::valid_qbit(str name, size_t qbit) {
   if (qbit >= size()) {
       sstr err;
       err << "\'" << name << "\' argument should be in the range of 0 to "

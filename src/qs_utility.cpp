@@ -24,16 +24,13 @@
 
 #include "../header/qsystem.h"
 #include <iomanip>
-#include <sstream>
 
 using namespace arma;
 
 /******************************************************/
 QSystem::QSystem(size_t nqbits,
-                  Gates& gates,
                   size_t seed,
              std::string state) :
-  gates{gates},
   _size{nqbits},
   _state{state},
   _ops{new Gate_aux[nqbits]()},

@@ -62,7 +62,7 @@ using size_t = long unsigned;
 %}
 
 %include "../header/qsystem.h"
-%include "../header/gates.h"
+%include "../header/gate.h"
 %include "../header/using.h"
 
 %pythoncode %{

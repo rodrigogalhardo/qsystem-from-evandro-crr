@@ -28,33 +28,44 @@
 using namespace arma;
 
 /******************************************************/
-void QSystem::evol(std::string gate,
-                        size_t qbit, 
-                        size_t count,
-                          bool inver) {
+void QSystem::evol(char gate,
+                 size_t qbit, 
+                 size_t count,
+                   bool inver) {
   valid_qbit("qbit", qbit);
 
-  if (gate.size() > 1) {
-    auto size_n = log2(gates.mget(gate).n_rows);
-    valid_count(qbit, count, size_n);
-    sync(qbit, qbit+count*size_n);
-    for (size_t i = 0; i < count; i++) {
-      size_t index = qbit+i*gate.size();
-      fill(Gate_aux::GATE_N, index, size_n);
-      ops(index).data = gate;
-      ops(index).inver = inver;
-    }
-  } else {
-    valid_count(qbit, count);
-    sync(qbit, qbit+count);
-    for (size_t i = 0; i < count; i++) {
-      ops(qbit+i).tag = Gate_aux::GATE_1;
-      ops(qbit+i).data = gate[0];
-      ops(qbit+i).inver = inver;
-    }
+  valid_count(qbit, count);
+  sync(qbit, qbit+count);
+  for (size_t i = 0; i < count; i++) {
+    ops(qbit+i).tag = Gate_aux::GATE_1;
+    ops(qbit+i).data = gate;
+    ops(qbit+i).inver = inver;
   }
 
   _sync = false;
+}
+
+/******************************************************/
+void QSystem::r(char axis, double angle, size_t qbit, size_t count) {
+  sync(qbit, qbit+count);
+  for (size_t i = 0; i < count; i++) {
+    ops(qbit+i).tag = Gate_aux::R;
+    ops(qbit+i).data = r_pair{axis, angle};
+  }
+  _sync = false;
+}
+
+/******************************************************/
+void QSystem::apply(gate::Gate gate, size_t qbit, size_t count, bool inver) {
+  auto size_n = log2(gate.get_mat()->n_rows);
+  valid_count(qbit, count, size_n);
+  sync(qbit, qbit+count*size_n);
+  for (size_t i = 0; i < count; i++) {
+    size_t index = qbit+i*size_n;
+    fill(Gate_aux::GATE_N, index, size_n);
+    ops(index).data = gate.get_mat();
+    ops(index).inver = inver;
+  }
 }
 
 /******************************************************/
@@ -144,9 +155,12 @@ sp_cx_mat QSystem::get_gate(Gate_aux &op) {
   auto get = [&]() {
       switch (op.tag) {
       case Gate_aux::GATE_1:
-        return gates.get(std::get<char>(op.data));
+        return gates[std::get<char>(op.data)];
       case Gate_aux::GATE_N:
-        return gates.mget(std::get<std::string>(op.data));
+        return *std::get<mat_ptr>(op.data);
+      case Gate_aux::R:
+        return make_r(std::get<r_pair>(op.data).first,
+                      std::get<r_pair>(op.data).second);
       case Gate_aux::CNOT:
         return make_cnot(std::get<cnot_pair>(op.data).first,
                          std::get<cnot_pair>(op.data).second,

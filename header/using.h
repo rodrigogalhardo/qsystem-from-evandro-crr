@@ -28,6 +28,9 @@
 #include <complex>
 #include <utility>
 #include <sstream>
+#include <memory>
+#include <Python.h>
+#include <armadillo>
 using size_t = long unsigned;
 using complex = std::complex<double>;
 using vec_complex = std::vector<std::complex<double>>;
@@ -38,4 +41,8 @@ using vec_float = std::vector<double>;
 using cnot_pair = std::pair<size_t, vec_size_t>;
 using cph_tuple = std::tuple<complex, size_t, vec_size_t>;
 using cut_pair = std::pair<size_t, size_t>;
+using r_pair = std::pair<char, double>;
 using sstr = std::stringstream;
+using str = std::string;
+using mat_ptr = std::shared_ptr<arma::sp_cx_mat>;
+using py_obj = PyObject*;

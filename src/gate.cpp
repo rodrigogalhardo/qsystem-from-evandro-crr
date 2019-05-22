@@ -22,66 +22,53 @@
  * SOFTWARE.
  */                                                                               
 
-#include "../header/gates.h"
-#include "../header/microtar.h"
+#include "../header/gate.h"
 
 using namespace arma;
+using namespace gate;
 
 /*********************************************************/
-Gates::Gates() {}
+Gate::Gate(mat_ptr mat) : mat{mat} {}
 
 /*********************************************************/
-Gates::Gates(std::string path) {
-  mtar_t tar;
-  mtar_header_t h;
-  char *m;
-
-  int err = mtar_open(&tar, path.c_str(), "r");
-  if (err < 0)
-    throw std::runtime_error{mtar_strerror(err)};
-
-  for (; mtar_read_header(&tar, &h) != MTAR_ENULLRECORD; mtar_next(&tar)) {
-    m = (char*) calloc(1, h.size);
-    mtar_read_data(&tar, m, h.size);
-    std::stringstream ss; 
-    ss.write(m, h.size);
-    free(m);
-    sp_cx_mat matrix;
-    matrix.load(ss, arma_binary);
-    mmap[std::string(h.name)] = matrix;
-  }
-
-  mtar_close(&tar);
+Gate::Gate(str path) {
+  mat = std::make_shared<sp_cx_mat>();
+  mat->load(path, arma_binary);
 }
 
 /*********************************************************/
-sp_cx_mat& Gates::get(char gate) {
-  return map.at(gate);
+void Gate::save(str path){
+  mat->save(path, arma_binary);
+}
+
+str Gate::__str__() {
+  sstr tmp;
+  mat->print_dense(tmp);
+  return tmp.str();
 }
 
 /*********************************************************/
-sp_cx_mat& Gates::mget(std::string gate) {
-  return mmap.at(gate);
+mat_ptr& Gate::get_mat() {
+  return mat;
 }
 
 /*********************************************************/
-void Gates::make_gate(char name, vec_complex matrix) {
+Gate gate::make_gate(vec_complex matrix) {
   if (matrix.size() != 4) {
     sstr err;
     err << "\'matrix\' argument must have exactly 4 elements: "
         << "[u00, u01, u10, u11]";
     throw std::invalid_argument{err.str()};
   }
-  map[name] = sp_cx_mat{cx_mat{{{matrix[0], matrix[1]},
-                                {matrix[2], matrix[3]}}}};
+  return std::make_shared<sp_cx_mat>(cx_mat{{{matrix[0], matrix[1]},
+                                             {matrix[2], matrix[3]}}});
 }
 
 /*********************************************************/
-void Gates::make_mgate(std::string name,
-                          size_t size, 
-                      vec_size_t row,
-                      vec_size_t col,
-                     vec_complex value) {
+Gate gate::make_mgate(size_t size, 
+                  vec_size_t row,
+                  vec_size_t col,
+                 vec_complex value) {
   if (row.size() != col.size()
       or row.size() != value.size()
       or col.size() != value.size()) {
@@ -91,19 +78,18 @@ void Gates::make_mgate(std::string name,
   }
 
   auto sizem = 1ul << size;
-  sp_cx_mat m{sizem, sizem};
+  auto mp = std::make_shared<sp_cx_mat>(sizem, sizem);
+  auto &m = *mp;
 
   for (size_t i = 0; i < row.size(); i++) {
     m(row[i], col[i]) = value[i];
   }
 
-  mmap[name] = m;
+  return mp;
 }
 
-/*********************************************************/
-void Gates::make_cgate(std::string name,
-                      std::string gates,
-                       vec_size_t control) {
+Gate gate::make_cgate(str gates,
+                 vec_size_t control) {
   if (control.size() == 0) {
     sstr err;
     err << "\'control\' argument must have at least one item";
@@ -143,7 +129,8 @@ void Gates::make_cgate(std::string name,
     return x & 1; 
   };
 
-  sp_cx_mat cm{1ul << size, 1ul << size};
+  auto cmp = std::make_shared<sp_cx_mat>(1ul << size, 1ul << size);
+  auto& cm = *cmp;
 
   for (size_t i = 0; i < (1ul << size); i++) {
     bool cond = true;
@@ -158,16 +145,15 @@ void Gates::make_cgate(std::string name,
     }
   }
 
-  mmap[name] = cm;
+  return cmp;
 }
 
-/*********************************************************/
-void Gates::make_fgate(std::string name,
-                         PyObject* func,
-                            size_t size,
-                         PyObject* iterator) {
+Gate gate::make_fgate(PyObject* func,
+                   size_t size,
+                PyObject* iterator) {
 
-  sp_cx_mat m{1ul << size, 1ul << size};
+  auto mp = std::make_shared<sp_cx_mat>(1ul << size, 1ul << size);
+  auto &m = *mp;
 
   if (iterator == Py_None) {
     PyObject *builtins = PyEval_GetBuiltins(); 
@@ -193,35 +179,6 @@ void Gates::make_fgate(std::string name,
 
   Py_DECREF(it);
 
-  mmap[name] = m;
-}
-
-/*********************************************************/
-std::string Gates::__str__() {
-  std::stringstream out;
-  for (auto& gate: mmap) {
-    out << gate.first << " - "
-        << log2(gate.second.n_rows)  << " qbits long"<< std::endl;
-  }
-  return out.str();
-}
-
-/*********************************************************/
-void Gates::save(std::string path){
-  mtar_t tar;
-  mtar_open(&tar, path.c_str(), "w");
-
-  for (auto &m : mmap) {
-    std::stringstream file;
-    m.second.save(file, arma_binary);
-    file.seekg(0, ios::end);
-    size_t size = file.tellg();
-    file.seekg(0, ios::beg);
-    mtar_write_file_header(&tar, m.first.c_str(), size);
-    mtar_write_data(&tar, file.str().c_str(), size);
-  }
-
-  mtar_finalize(&tar);
-  mtar_close(&tar);
+  return mp;
 }
 

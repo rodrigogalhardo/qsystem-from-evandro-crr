@@ -47,6 +47,19 @@ sp_cx_mat QSystem::make_gate(sp_cx_mat gate, size_t qbit) {
 }
 
 /*********************************************************/
+sp_cx_mat QSystem::make_r(char axis, double angle) {
+  if (axis == 'X') 
+    return sp_cx_mat{cx_mat{{{{cos(angle/2), 0}, {0, sin(angle/2)}},
+                             {{0, sin(angle/2)}, {cos(angle/2), 0}}}}};
+  else if (axis == 'Y')
+    return sp_cx_mat{cx_mat{{{{cos(angle/2), 0},  {sin(angle/2), 0}},
+                             {{-sin(angle/2), 0}, {cos(angle/2), 0}}}}};
+  else 
+    return sp_cx_mat{cx_mat{{{{cos(angle/2), sin(angle/2)}, {0, 0}},
+                             {{0, 0}, {-cos(angle/2), -sin(angle/2)}}}}};
+}
+
+/*********************************************************/
 sp_cx_mat QSystem::make_cnot(size_t target,
                          vec_size_t control,
                              size_t size_n) {
