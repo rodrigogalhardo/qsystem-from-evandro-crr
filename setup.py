@@ -4,10 +4,9 @@ from setuptools.extension import Extension
 with open('README.md', 'r') as fh:
     long_description = fh.read()
 
-ext_module = Extension('_qsystem',
+ext_module = Extension('qsystem._qsystem',
         sources=['src/qsystem.cpp',
-                 'src/gates.cpp',
-                 'src/microtar.c', 
+                 'src/gate.cpp',
                  'src/qs_ancillas.cpp',
                  'src/qs_errors.cpp',
                  'src/qs_evol.cpp',
