@@ -15,11 +15,9 @@ Like the follow example:
 ![circ](https://gitlab.com/evandro-crr/qsystem/raw/master/circ.svg?inline=false)
 
 ```python
-from qsystem import Gates, QSystem
+from qsystem import QSystem
 from cmath import exp, pi
-gates = Gates()
-          
-q = QSystem(3, gates, 24)                 # init q0, q1, q2
+q = QSystem(3, 24)                 # init q0, q1, q2
 
 q.evol(gate='H', qbit=0, count=3)         # H q0; H q1; H q2
 q.add_ancillas(4)                         # init a0, a1, a2, a3
