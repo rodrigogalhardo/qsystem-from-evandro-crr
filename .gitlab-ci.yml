@@ -10,7 +10,7 @@ test:
   script:
   - doxygen doxygen/Doxyfile
   except:
-  - master
+  - 1.0.0
   
 pages:
   script:
@@ -20,5 +20,5 @@ pages:
     paths:
     - public
   only:
-  - master
+  - 1.0.0
 
