@@ -3,6 +3,7 @@
 [![PyPI - License](https://img.shields.io/pypi/l/qsystem.svg?color=brightgree)](https://gitlab.com/evandro-crr/qsystem/blob/master/LICENSE)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/qsystem.svg?color=red)](https://www.python.org/)
 [![Wiki](https://img.shields.io/badge/wiki-available-sucess.svg)](https://gitlab.com/evandro-crr/qsystem/wikis/home)
+[![Doc](https://img.shields.io/badge/doc-available-succes.svg)](https://evandro-crr.gitlab.io/qsystem/index.html)
 
 A quantum computing simulator for Python.
 
@@ -50,8 +51,8 @@ print('final measurement =', q.bits())
 # final measurement = [1, 0, 0]
 ```
 
-Seed the [wiki](https://gitlab.com/evandro-crr/qsystem/wikis/home) for
-documentation.
+Seed the [wiki](https://gitlab.com/evandro-crr/qsystem/wikis/home) and the
+[documentation](https://evandro-crr.gitlab.io/qsystem/index.html).
 
 ---------------------------
 This software is suported by 
