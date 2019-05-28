@@ -12,7 +12,7 @@ convert any quantum circuit to  Python.
 
 Like the follow example:
 
-![circ](https://gitlab.com/evandro-crr/qsystem/raw/master/circ.svg?inline=false)
+![circ](https://gitlab.com/evandro-crr/qsystem/raw/1.0.0/circ.svg?inline=false)
 
 ```python
 from qsystem import Gates, QSystem
