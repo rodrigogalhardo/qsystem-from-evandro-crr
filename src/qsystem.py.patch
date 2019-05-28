@@ -1,5 +1,5 @@
---- qsystem.py	2019-05-28 15:59:47.516917559 -0300
-+++ qsystem_.py	2019-05-28 15:59:42.073576836 -0300
+--- qsystem/__init__.py	2019-05-28 20:00:04.126658449 -0300
++++ qsystem/__init__b.py	2019-05-28 20:00:01.433293321 -0300
 @@ -685,8 +685,8 @@
      thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc='The membership flag')
      __repr__ = _swig_repr
