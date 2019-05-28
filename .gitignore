@@ -6,6 +6,4 @@ armadillo-code/
 dist/
 qsystem/
 src/qsystem.cpp
-src/qsystem.py
-_qsystem.so
-qsystem.py
+doxygen/documentation
