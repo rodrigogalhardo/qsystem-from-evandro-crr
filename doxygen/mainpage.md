@@ -1,4 +1,4 @@
-QSystem is a quantum computer simulator for python. 
+QSystem is a quantum computer simulator for Python. 
 
 You can get QSystem using pip.
 ```bash
