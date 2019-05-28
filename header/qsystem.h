@@ -36,8 +36,8 @@ class QSystem {
 
     bool busy();
 
-    enum Tag {GATE_1, GATE_N,
-              R, CNOT, CPHASE,
+    enum Tag {GATE_1, GATE_N, R,
+              U3, CNOT, CPHASE,
               SWAP, QFT} tag;
 
     std::variant<char,
@@ -45,6 +45,7 @@ class QSystem {
                  str,
                  mat_ptr,
                  cnot_pair,
+                 u3_tuple,
                  cph_tuple> data;
 
     size_t size;
@@ -65,21 +66,50 @@ class QSystem {
      */
     QSystem(size_t nqbits,
             size_t seed=42,
-       str state="vector");
+               str state="vector",
+            size_t init=0);
 
     ~QSystem();
     
     //! Apply a quantum gate
     /*!
-     * The gate will be applied in from qubits `qbit` to `qbit*cout*(size of
-     * the gate)`. If `gate` parameter is just one character long, the size of
-     * the gate is necessarily one.
-     *
+     * The gate will be applied from the qubits `qbit` to `qbit+cout`. The
+     * follow gates are available:
+     * * ```'I'``` = \f$\begin{bmatrix}
+     *                   1 & 0 \\
+     *                   0 & 1
+     *                  \end{bmatrix}\f$
+     * * ```'Y'``` = \f$\begin{bmatrix}
+     *                   0 & 1 \\
+     *                   1 & 0
+     *                  \end{bmatrix}\f$
+     * * ```'X'``` = \f$\begin{bmatrix}
+     *                   0 & -i \\
+     *                   i & 0
+     *                  \end{bmatrix}\f$
+     * * ```'Z'``` = \f$\begin{bmatrix}
+     *                   1 & 0 \\
+     *                   0 & -1
+     *                  \end{bmatrix}\f$
+     * * ```'H'``` = \f${1\over\sqrt{2}}\begin{bmatrix}
+     *                                   1 & 1 \\
+     *                                   1 & -1
+     *                                  \end{bmatrix}\f$
+     * * ```'S'``` = \f$\begin{bmatrix}
+     *                   1 & 0 \\
+     *                   0 & i
+     *                  \end{bmatrix}\f$
+     * * ```'T'``` = \f$\begin{bmatrix}
+     *                   1 & 0 \\
+     *                   0 & e^{i\pi\over4}
+     *                  \end{bmatrix}\f$.
+     * 
      * \param gate name of the gate that will be user.
      * \param qbit qubit affected by the gate.
      * \param count number of successive repetitions of the gate.
      * \param inver if true, apply the inverse quantum gate.
-     * \sa QSystem::cnot QSystem::cphase QSystem::qft QSystem::swap
+     * \sa QSystem::r QSystem::u3 QSystem::u2 QSystem::u1
+     * QSystem::apply QSystem::cnot QSystem::cphase QSystem::qft QSystem::swap
      */
     void evol(char gate,
             size_t qbit, 
@@ -87,12 +117,109 @@ class QSystem {
               bool inver=false);
 
     //! Rotate a qubit in X, Y or Z axis
+    /*! 
+     * The rotation will be applied from the qubits `qbit` to `qbit+cout`
+     * The rotation matrix for each axis are:
+     * * ```'X'``` = \f$\begin{bmatrix}
+     *                   \cos{\theta\over2} & -i\sin{\theta\over2} \\
+     *                   -i\sin{\theta\over2} & \cos{\theta\over2} \\
+     *                  \end{bmatrix}\f$
+     * * ```'Y'``` = \f$\begin{bmatrix}
+     *                   \cos{\theta\over2} & -\sin{\theta\over2} \\
+     *                   \sin{\theta\over2} & \cos{\theta\over2} \\
+     *                  \end{bmatrix}\f$
+     * * ```'Z'``` = \f$\begin{bmatrix}
+     *                   -e^{i{\theta\over2}} & 0 \\
+     *                   0 & e^{i{\theta\over2}} \\
+     *                  \end{bmatrix}\f$
+     *
+     * \param axis of the rotation
+     * \param angle \f$\theta\f$ of the rotation
+     * \param qbit qubit affected by the rotation.
+     * \param count number of successive repetitions of the gate.
+     * \sa QSystem::evol QSystem::u3 QSystem::u2 QSystem::u1
+     * QSystem::apply QSystem::cnot QSystem::cphase QSystem::qft QSystem::swap
+     */
     void r(char axis,
          double angle,
          size_t qbit, 
          size_t count=1);
 
-    void apply(gate::Gate gate, size_t qbit, size_t count=1, bool inver=false);
+    //! Apply an arbitrary u3 gate
+    /*!
+     * The gate will be applied from the qubits `qbit` to `qbit+cout`.
+     * \f[ 
+     * u3 = 
+     * \begin{bmatrix}
+     * \cos{\theta\over2}          & -e^{i\lambda}\sin{\theta\over2} \\
+     * e^{i\phi}\sin{\theta\over2} & e^{i(\lambda+\phi)}\cos{\theta\over2}
+     * \end{bmatrix}
+     * \f]
+     *
+     * \param thata = \f$\theta\f$
+     * \param psi = \f$\phi\f$
+     * \param lambd = \f$\lambda\f$
+     * \param qbit qubit affected by the gate.
+     * \param count number of successive repetitions of the gate.
+     * \sa QSystem::evol QSystem::r QSystem::u2 QSystem::u1
+     * QSystem::apply QSystem::cnot QSystem::cphase QSystem::qft QSystem::swap
+     */
+    void u3(double theta,
+            double phi,
+            double lambd,
+            size_t qbit, 
+            size_t count=1);
+
+    //! Apply an arbitrary u2 gate
+    /*!
+     * The gate will be applied from the qubits `qbit` to `qbit+cout`.
+     * \f[ 
+     * u2 = 
+     * \begin{bmatrix}
+     * 1 & -e^{i\lambda} \\
+     * e^{i\phi} & e^{i(\lambda+\phi)}
+     * \end{bmatrix}
+     * \f]
+     *
+     * \param psi = \f$\phi\f$
+     * \param lambd = \f$\lambda\f$
+     * \param qbit qubit affected by the gate.
+     * \param count number of successive repetitions of the gate.  
+     * \sa QSystem::evol QSystem::r QSystem::u3 QSystem::u1
+     * QSystem::apply QSystem::cnot QSystem::cphase QSystem::qft QSystem::swap
+     */
+    void u2(double phi,
+            double lambd, 
+            size_t qbit, 
+            size_t count=1);
+
+    //! Apply an arbitrary u1 (phase) gate
+    /*!
+     * The gate will be applied from the qubits `qbit` to `qbit+cout`.
+     * \f[ 
+     * u1 = 
+     * \begin{bmatrix}
+     * 1 & 0 \\
+     * 0 & e^{i\lambda}
+     * \end{bmatrix}
+     * \f]
+     *
+     * \param lambd = \f$\lambda\f$
+     * \param qbit qubit affected by the gate.
+     * \param count number of successive repetitions of the gate. 
+     * \sa QSystem::evol QSystem::r QSystem::u3 QSystem::u2
+     * QSystem::apply QSystem::cnot QSystem::cphase QSystem::qft QSystem::swap
+     */
+    void u1(double lambd, 
+            size_t qbit,
+            size_t count=1);
+
+    //! Apply a gate from a Gate class
+    /*!
+     * \sa QSystem::evol QSystem::r QSystem::u3 QSystem::u2 QSystem::u1
+     * QSystem::apply QSystem::cnot QSystem::cphase QSystem::qft QSystem::swap
+     */
+    void apply(Gate gate, size_t qbit, size_t count=1, bool inver=false);
 
     //! Apply a controlled not 
     /*!
@@ -101,7 +228,8 @@ class QSystem {
      *
      * \param target target qubit.
      * \param control list of control qubits.
-     * \sa QSystem::evol QSystem::cphase QSystem::qft QSystem::swap
+     * \sa QSystem::evol QSystem::r QSystem::u3 QSystem::u2 QSystem::u1
+     * QSystem::cphase QSystem::qft QSystem::swap
      */
     void cnot(size_t target, vec_size_t control);
 
@@ -114,7 +242,8 @@ class QSystem {
      * \param phase \f$e^\phi\f$ value.
      * \param target target qubit.
      * \param control list of control qubits.
-     * \sa QSystem::evol QSystem::cnot QSystem::qft QSystem::swap
+     * \sa QSystem::evol QSystem::r QSystem::u3 QSystem::u2 QSystem::u1
+     * QSystem::apply QSystem::cnot QSystem::qft QSystem::swap
      */
     void cphase(complex phase, size_t target, vec_size_t control);
 
@@ -124,7 +253,8 @@ class QSystem {
      *
      * \param qbegin first qubit affected. 
      * \param qend last qubit affected +1.
-     * \sa QSystem::evol QSystem::cnot QSystem::cphase QSystem::swap
+     * \sa QSystem::evol QSystem::r QSystem::u3 QSystem::u2 QSystem::u1
+     * QSystem::apply QSystem::cnot QSystem::cphase QSystem::swap
      */
     void qft(size_t qbegin, size_t qend, bool inver=false);
 
@@ -132,7 +262,8 @@ class QSystem {
     /*!
      * \param qbit_a qubit that gonna be swapped with `qbit_b`.
      * \param qbit_a qubit that gonna be swapped with `qbit_a`.
-     * \sa QSystem::evol QSystem::cnot QSystem::cphase QSystem::qft
+     * \sa QSystem::evol QSystem::r QSystem::u3 QSystem::u2 QSystem::u1
+     * QSystem::apply QSystem::cnot QSystem::cphase QSystem::qft 
      */
     void swap(size_t qbit_a, size_t qbit_b);
     
@@ -329,7 +460,7 @@ class QSystem {
      * \return Tuple used to initialize a scipy space matrix.
      * \sa QSystem::set_qbits
      */
-    PyObject* get_qbits();
+    py_obj get_qbits();
 
     //! Change the matrix of the quantum system
     /*!
@@ -368,7 +499,7 @@ class QSystem {
      * \param nqbits number of ancillas added.
      * \sa QSystem::rm_ancillas
      */
-    void add_ancillas(size_t nqbits);
+    void add_ancillas(size_t nqbits, size_t init=0);
 
     //! Remove all ancillary qubits
     /*!
@@ -403,6 +534,7 @@ class QSystem {
                                  size_t size_n);
     arma::sp_cx_mat make_swap(size_t size_n);
     arma::sp_cx_mat make_qft(size_t size_n);
+    arma::sp_cx_mat make_u3(double theta, double phi, double lambd);
 
     /* src/qs_utility.cpp */
     void            clear();
@@ -437,16 +569,18 @@ class QSystem {
     };
 
 
-    inline void     valid_qbit(str name, size_t qbit);
-    inline void     valid_count(size_t qbit, size_t count, size_t size_n=1);
-    inline void     valid_control(vec_size_t &control);
-    inline void     valid_phase(complex phase);
-    inline void     valid_swap(size_t qbit_a, size_t qbit_b);
-    inline void     valid_range(size_t qbegin, size_t qend);
-    inline void     valid_gate(char gate);
-    inline void     valid_p(double p);
-    inline void     valid_state();
-    inline void     valid_krau(vec_str &kraus);
+    inline void valid_qbit(str name, size_t qbit);
+    inline void valid_count(size_t qbit, size_t count, size_t size_n=1);
+    inline void valid_control(vec_size_t &control);
+    inline void valid_phase(complex phase);
+    inline void valid_swap(size_t qbit_a, size_t qbit_b);
+    inline void valid_range(size_t qbegin, size_t qend);
+    inline void valid_gate(str name, char gate);
+    inline void valid_p(double p);
+    inline void valid_state();
+    inline void valid_krau(vec_str &kraus);
+    inline void valid_state_str(str &state);
+    inline void valid_init(size_t init, size_t nqbits);
 
 };
 
@@ -520,10 +654,10 @@ inline void QSystem::valid_range(size_t qbegin, size_t qend) {
 }
 
 /******************************************************/
-inline void QSystem::valid_gate(char gate) {
+inline void QSystem::valid_gate(str name, char gate) {
   if (not (gate == 'X' or gate == 'Y' or gate == 'Z')) {
     sstr err;
-    err << "\'gate\' argument must be equal to \'X\', \'Y\' or \'X\'";
+    err << "\'" << name << "\' argument must be equal to \'X\', \'Y\' or \'X\'";
     throw std::invalid_argument{err.str()};    
   }
 }
@@ -556,3 +690,21 @@ inline void QSystem::valid_krau(vec_str &kraus) {
   }
 }
 
+inline void QSystem::valid_state_str(str &state) {
+  if (state != "matrix" and state != "vector") {
+    sstr err;
+    err << "\'state\' argument must have value " 
+        <<  "\"vector\" or \"matrix\", not \""
+        << state << "\"";
+    throw std::invalid_argument{err.str()};
+  }
+}
+
+inline void QSystem::valid_init(size_t init, size_t nqbits) {
+  if (init >= (1ul << nqbits)) {
+    sstr err;
+    err << "\'init\' argument must be in the range of 0 to "
+        << (1ul << nqbits);
+    throw std::invalid_argument{err.str()};
+  }
+}

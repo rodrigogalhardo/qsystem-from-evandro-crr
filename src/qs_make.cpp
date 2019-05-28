@@ -60,6 +60,16 @@ sp_cx_mat QSystem::make_r(char axis, double angle) {
 }
 
 /*********************************************************/
+sp_cx_mat QSystem::make_u3(double theta, double phi, double lambd) {
+  return sp_cx_mat{cx_mat{{
+    {{cos(theta/2), 0}, 
+     {-cos(lambd)*sin(theta/2), -sin(lambd)*sin(theta/2)}},
+    {{cos(phi)*sin(theta/2), sin(phi)*sin(theta/2)}, 
+     {cos(lambd+phi)*cos(theta/2), sin(lambd+phi)*cos(theta/2)}
+    }}}};
+}
+
+/*********************************************************/
 sp_cx_mat QSystem::make_cnot(size_t target,
                          vec_size_t control,
                              size_t size_n) {

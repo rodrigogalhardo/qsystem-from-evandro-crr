@@ -25,7 +25,6 @@
 #include "../header/gate.h"
 
 using namespace arma;
-using namespace gate;
 
 /*********************************************************/
 Gate::Gate(mat_ptr mat) : mat{mat} {}
@@ -53,7 +52,7 @@ mat_ptr& Gate::get_mat() {
 }
 
 /*********************************************************/
-Gate gate::make_gate(vec_complex matrix) {
+Gate Gate::make_gate(vec_complex matrix) {
   if (matrix.size() != 4) {
     sstr err;
     err << "\'matrix\' argument must have exactly 4 elements: "
@@ -65,7 +64,7 @@ Gate gate::make_gate(vec_complex matrix) {
 }
 
 /*********************************************************/
-Gate gate::make_mgate(size_t size, 
+Gate Gate::make_mgate(size_t size, 
                   vec_size_t row,
                   vec_size_t col,
                  vec_complex value) {
@@ -88,7 +87,7 @@ Gate gate::make_mgate(size_t size,
   return mp;
 }
 
-Gate gate::make_cgate(str gates,
+Gate Gate::make_cgate(str gates,
                  vec_size_t control) {
   if (control.size() == 0) {
     sstr err;
@@ -148,7 +147,7 @@ Gate gate::make_cgate(str gates,
   return cmp;
 }
 
-Gate gate::make_fgate(PyObject* func,
+Gate Gate::make_fgate(PyObject* func,
                    size_t size,
                 PyObject* iterator) {
 

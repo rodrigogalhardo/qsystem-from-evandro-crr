@@ -28,7 +28,7 @@ using namespace arma;
 
 /******************************************************/
 void QSystem::flip(char gate, size_t qbit, double p) {
-  valid_gate(gate);
+  valid_gate("gate", gate);
   valid_qbit("qbit", qbit);
   valid_p(p);
 

@@ -27,7 +27,8 @@
 using namespace arma;
 
 /******************************************************/
-void QSystem::add_ancillas(size_t nqbits) {
+void QSystem::add_ancillas(size_t nqbits, size_t init) {
+  valid_init(init, nqbits);
   if (nqbits == 0) {
     throw std::invalid_argument{"\'an_num\' argument must be greater than 0"};
   } else if (an_size != 0) {
@@ -43,7 +44,7 @@ void QSystem::add_ancillas(size_t nqbits) {
   an_bits = new Bit[an_size]();
 
   sp_cx_mat an_qbits{1ul << an_size, _state == "matrix" ? 1lu << an_size : 1};
-  an_qbits(0,0) = 1;
+  an_qbits(init, _state == "matrix" ? init : 0) = 1;
   qbits = kron(qbits, an_qbits);
 }
 

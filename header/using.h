@@ -40,6 +40,7 @@ using vec_int = std::vector<int>;
 using vec_float = std::vector<double>;
 using cnot_pair = std::pair<size_t, vec_size_t>;
 using cph_tuple = std::tuple<complex, size_t, vec_size_t>;
+using u3_tuple = std::tuple<double, double, double>;
 using cut_pair = std::pair<size_t, size_t>;
 using r_pair = std::pair<char, double>;
 using sstr = std::stringstream;

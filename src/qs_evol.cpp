@@ -47,6 +47,8 @@ void QSystem::evol(char gate,
 
 /******************************************************/
 void QSystem::r(char axis, double angle, size_t qbit, size_t count) {
+  valid_gate("axis", axis);
+
   sync(qbit, qbit+count);
   for (size_t i = 0; i < count; i++) {
     ops(qbit+i).tag = Gate_aux::R;
@@ -56,7 +58,46 @@ void QSystem::r(char axis, double angle, size_t qbit, size_t count) {
 }
 
 /******************************************************/
-void QSystem::apply(gate::Gate gate, size_t qbit, size_t count, bool inver) {
+void QSystem::u3(double theta, 
+                 double phi,
+                 double lambd,
+                 size_t qbit, 
+                 size_t count) {
+  sync(qbit, qbit+count);
+  for (size_t i = 0; i < count; i++) {
+    ops(qbit+i).tag = Gate_aux::U3;
+    ops(qbit+i).data = u3_tuple{theta, phi, lambd};
+  }
+  _sync = false;
+}
+
+/******************************************************/
+void QSystem::u2(double phi,
+                 double lambd,
+                 size_t qbit, 
+                 size_t count) {
+  sync(qbit, qbit+count);
+  for (size_t i = 0; i < count; i++) {
+    ops(qbit+i).tag = Gate_aux::U3;
+    ops(qbit+i).data = u3_tuple{M_PI/2, phi, lambd};
+  }
+  _sync = false;
+}
+
+/******************************************************/
+void QSystem::u1(double lambd,
+                 size_t qbit, 
+                 size_t count) {
+  sync(qbit, qbit+count);
+  for (size_t i = 0; i < count; i++) {
+    ops(qbit+i).tag = Gate_aux::U3;
+    ops(qbit+i).data = u3_tuple{0, 0, lambd};
+  }
+  _sync = false;
+}
+
+/******************************************************/
+void QSystem::apply(Gate gate, size_t qbit, size_t count, bool inver) {
   auto size_n = log2(gate.get_mat()->n_rows);
   valid_count(qbit, count, size_n);
   sync(qbit, qbit+count*size_n);
@@ -161,6 +202,10 @@ sp_cx_mat QSystem::get_gate(Gate_aux &op) {
       case Gate_aux::R:
         return make_r(std::get<r_pair>(op.data).first,
                       std::get<r_pair>(op.data).second);
+      case Gate_aux::U3:
+        return make_u3(std::get<0>(std::get<u3_tuple>(op.data)),
+                       std::get<1>(std::get<u3_tuple>(op.data)),
+                       std::get<2>(std::get<u3_tuple>(op.data)));
       case Gate_aux::CNOT:
         return make_cnot(std::get<cnot_pair>(op.data).first,
                          std::get<cnot_pair>(op.data).second,

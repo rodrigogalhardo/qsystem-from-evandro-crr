@@ -30,7 +30,8 @@ using namespace arma;
 /******************************************************/
 QSystem::QSystem(size_t nqbits,
                   size_t seed,
-             std::string state) :
+             std::string state,
+                  size_t init) :
   _size{nqbits},
   _state{state},
   _ops{new Gate_aux[nqbits]()},
@@ -41,14 +42,9 @@ QSystem::QSystem(size_t nqbits,
   an_ops{nullptr},
   an_bits{nullptr}
 {
-  if (state != "matrix" and state != "vector") {
-    sstr err;
-    err << "\'state\' argument must have value " 
-        <<  "\"vector\" or \"matrix\", not \""
-        << state << "\"";
-    throw std::invalid_argument{err.str()};
-  }
-  qbits(0,0) = 1;
+  valid_state_str(state);
+  valid_init(init, nqbits);
+  qbits(init, state == "matrix"? init : 0) = 1;
   std::srand(seed);
 }
 
@@ -174,13 +170,7 @@ void QSystem::set_qbits(vec_size_t row_ind,
 
 /******************************************************/
 void QSystem::change_to(std::string new_state) {
-  if (new_state != "matrix" and new_state != "vector") {
-    sstr err;
-    err << "\'state\' argument must have value " 
-        <<  "\"vector\" or \"matrix\", not \""
-        << new_state << "\"";
-    throw std::invalid_argument{err.str()};
-  }
+  valid_state_str(new_state);
 
   if (new_state == _state) 
     return;
