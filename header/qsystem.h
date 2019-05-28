@@ -57,11 +57,12 @@ class QSystem {
   public:
     //! Constructor 
     /*!
-     * All qubits are initialized in the state \f$\left|0\right>\f$.
+     * The qubits are initialized in the state \f$\left|init\right>\f$.
      *
      * \param nqbits number of qubits in the system.
      * \param seed for the pseudorandom number generator.
      * \param state representation of the system, use `"vector"` for vector.
+     * \param init initial state.
      * state and `"matrix"` for density matrix
      */
     QSystem(size_t nqbits,
@@ -216,6 +217,13 @@ class QSystem {
 
     //! Apply a gate from a Gate class
     /*!
+     * The gate will be applied from the qubits `qbit` to `qbit+cout*(size of
+     * the gate)`.
+     *
+     * \param gate instace of Gate class
+     * \param qbit qubit affected by the gate.
+     * \param count number of successive repetitions of the gate. 
+     * \param inver if true, apply the inverse quantum gate.
      * \sa QSystem::evol QSystem::r QSystem::u3 QSystem::u2 QSystem::u1
      * QSystem::apply QSystem::cnot QSystem::cphase QSystem::qft QSystem::swap
      */
@@ -497,6 +505,7 @@ class QSystem {
      * any method.
      *
      * \param nqbits number of ancillas added.
+     * \param init incitial state of the ancillas.
      * \sa QSystem::rm_ancillas
      */
     void add_ancillas(size_t nqbits, size_t init=0);
