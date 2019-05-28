@@ -157,8 +157,8 @@ class QSystem {
      * \end{bmatrix}
      * \f]
      *
-     * \param thata = \f$\theta\f$
-     * \param psi = \f$\phi\f$
+     * \param theta = \f$\theta\f$
+     * \param phi = \f$\phi\f$
      * \param lambd = \f$\lambda\f$
      * \param qbit qubit affected by the gate.
      * \param count number of successive repetitions of the gate.
@@ -182,7 +182,7 @@ class QSystem {
      * \end{bmatrix}
      * \f]
      *
-     * \param psi = \f$\phi\f$
+     * \param phi = \f$\phi\f$
      * \param lambd = \f$\lambda\f$
      * \param qbit qubit affected by the gate.
      * \param count number of successive repetitions of the gate.  
@@ -261,6 +261,7 @@ class QSystem {
      *
      * \param qbegin first qubit affected. 
      * \param qend last qubit affected +1.
+     * \param inver if true, apply the inverse quantum gate.
      * \sa QSystem::evol QSystem::r QSystem::u3 QSystem::u2 QSystem::u1
      * QSystem::apply QSystem::cnot QSystem::cphase QSystem::swap
      */
@@ -269,7 +270,7 @@ class QSystem {
     //! Swap two qubit
     /*!
      * \param qbit_a qubit that gonna be swapped with `qbit_b`.
-     * \param qbit_a qubit that gonna be swapped with `qbit_a`.
+     * \param qbit_b qubit that gonna be swapped with `qbit_a`.
      * \sa QSystem::evol QSystem::r QSystem::u3 QSystem::u2 QSystem::u1
      * QSystem::apply QSystem::cnot QSystem::cphase QSystem::qft 
      */
@@ -488,7 +489,7 @@ class QSystem {
      * 
      * \param row_ind row indices.
      * \param col_ptr column pointers.
-     * \param value non-zero values.
+     * \param values non-zero values.
      * \param nqbits number of qubits.
      * \param state representation.
      * \sa QSystem::get_qbits
@@ -517,7 +518,6 @@ class QSystem {
      * the ancillas are removed by a partial trace operation, without been
      * measured.
      *
-     * \param nqbits number of ancillas added.
      * \sa QSystem::rm_ancillas
      */
     void rm_ancillas();

@@ -47,3 +47,5 @@ using sstr = std::stringstream;
 using str = std::string;
 using mat_ptr = std::shared_ptr<arma::sp_cx_mat>;
 using py_obj = PyObject*;
+using py_function = PyObject*;
+using py_iterator = PyObject*;

@@ -118,9 +118,9 @@ class Gate {
      * \return Gate class.
      * \sa Gate::make_gate Gate::make_mgate Gate::make_cgate
      */
-    static Gate make_fgate(py_obj func,
-                           size_t size,
-                           py_obj iterator=Py_None);
+    static Gate make_fgate(py_function func,
+                                size_t size,
+                           py_iterator iterator=Py_None);
 
     //! Return the matrix pointer
     /*! 
