@@ -84,14 +84,48 @@ std::string QSystem::__str__() {
   auto cx_to_str = [&](std::complex<double> i) {
     std::stringstream ss;
     if (fabs(i.imag()) < 1e-14) {
-      ss << std::showpos << std::fixed
-         << std::setprecision(3)  << i.real() << "       ";
+      double tmp = 1.0/pow(i.real(), 2);
+      int itmp = tmp;
+      if (itmp != 1 and tmp - double(itmp) < 1e-13) {
+        ss << (signbit(i.real())? '-' : '+') << std::left << std::setw(11)
+           << str{"1/sqrt(" + std::to_string(itmp) + ")"} << std::left
+           << std::setw(12) << ' ';
+      } else {
+        ss << std::showpos << std::fixed
+           << std::setprecision(9)  
+           << i.real() << std::setw(12) << ' ';
+      }
     } else if (fabs(i.real()) < 1e-14) {
-      ss << std::showpos << std::fixed
-         << std::setprecision(3) << std::setw(12) << i.imag() << 'i';
+      double tmp = 1.0/pow(i.imag(), 2);
+      int itmp = tmp;
+      if (itmp != 1 and tmp - double(itmp) < 1e-13) {
+        ss << std::left << std::setw(12) << ' ' 
+           << (signbit(i.imag())? '-' : '+')
+           << std::left << std::setw(11) 
+           << str{"i/sqrt(" + std::to_string(itmp) + ")"};
+      } else{
+        ss << std::left << std::setw(12) << ' '  
+           << std::showpos << std::fixed
+           << std::setprecision(8) << i.imag() << 'i';
+      }
     } else {
-      ss << std::showpos << std::fixed << std::setprecision(3) << i.real()
-         << i.imag() << 'i';
+      double tmp = 1.0/pow(i.real(), 2);
+      int itmp = tmp;
+      if (itmp != 1 and tmp - double(itmp) < 1e-13) 
+        ss << (signbit(i.real())? '-' : '+') 
+           << std::left << std::setw(11)
+           << str{"1/sqtr(" + std::to_string(itmp) + ")"};
+      else
+        ss << std::showpos << std::fixed << std::setprecision(9) << i.real();
+      tmp = 1.0/pow(i.imag(), 2);
+      itmp = tmp;
+      if (itmp != 1 and tmp - double(itmp) < 1e-13) 
+        ss << (signbit(i.imag())? '-' : '+') 
+           << std::left << std::setw(11) 
+           << str{"i/sqrt(" + std::to_string(itmp) + ")"};
+      else
+        ss << std::showpos << std::fixed << std::setprecision(8) 
+           << i.imag() << 'i';
     }
     return ss.str();
   };
@@ -101,13 +135,15 @@ std::string QSystem::__str__() {
   if (state() == "vector") {
     for (auto i = qbits.begin(); i != qbits.end(); ++i) {
       if (abs((cx_double)*i) < 1e-14) continue; 
-      out << cx_to_str(*i) << to_bits(i.row()) << '\n';
+      out << cx_to_str(*i)
+          << to_bits(i.row()) << std::endl;
     }
   } else if (state() == "matrix") {
     for (auto i = qbits.begin(); i != qbits.end(); ++i) {
       auto aux = cx_to_str(*i);
-      out << "(" << i.row() << ", " << i.col() << ")    " <<
-        (aux == ""? "1" : aux)  << std::endl;
+      out << "(" << i.row() << ", " << i.col() << std::left
+          << std::setw(5) << ")"
+          << (aux == ""? "1" : aux)  << std::endl;
     }
   }
   return out.str();
