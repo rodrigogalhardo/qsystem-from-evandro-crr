@@ -54,6 +54,8 @@ class Gate {
      */
     str __str__();
 
+    str __repr__();
+
     //! Save the quantum gate in a file
     /*!
      * The file is in a machine dependent binary format defined by the library

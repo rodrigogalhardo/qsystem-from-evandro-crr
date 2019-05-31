@@ -40,10 +40,34 @@ void Gate::save(str path){
   mat->save(path, arma_binary);
 }
 
+/*********************************************************/
 str Gate::__str__() {
-  sstr tmp;
-  mat->print_dense(tmp);
-  return tmp.str();
+  sstr out;
+  size_t size = log2(mat->n_rows);
+  if (size == 1)
+    out <<"1 qubit gate" << std::endl;
+  else 
+    out << size <<" qubits gate" << std::endl;
+
+  for (auto i = mat->begin(); i != mat->end(); ++i) {
+    auto aux = utility::cx_to_str(*i);
+    out << "(" << i.row() << ", " << i.col() << std::left
+        << std::setw(10) << ")"
+        << (aux == ""? "1" : aux)  << std::endl;
+  }
+  return out.str();
+}
+
+/*********************************************************/
+str Gate::__repr__() { 
+  sstr out;
+  size_t size = log2(mat->n_rows);
+  if (size == 1)
+    out <<"<1 qubit gate>";
+  else 
+    out << '<' << size <<" qubits gate>";
+
+  return out.str();
 }
 
 /*********************************************************/

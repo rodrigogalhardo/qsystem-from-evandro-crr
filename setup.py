@@ -12,7 +12,8 @@ ext_module = Extension('qsystem._qsystem',
                  'src/qs_evol.cpp',
                  'src/qs_make.cpp',
                  'src/qs_measure.cpp',
-                 'src/qs_utility.cpp'],
+                 'src/qs_utility.cpp',
+                 'src/utility.cpp'],
         include_dirs=['armadillo-code/include'],
         extra_compile_args=['-std=c++17']
         )

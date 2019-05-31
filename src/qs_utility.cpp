@@ -23,7 +23,6 @@
  */                                                                               
 
 #include "../header/qsystem.h"
-#include <iomanip>
 
 using namespace arma;
 
@@ -70,79 +69,19 @@ bool QSystem::Gate_aux::busy() {
 
 /******************************************************/
 std::string QSystem::__str__() {
-  auto to_bits = [&](size_t i) {
-    std::string sbits{'|'};
-    for (size_t j = 0; j < _size; j++)
-      sbits += i & 1ul << (size()-j-1)? '1' : '0';
-    sbits += an_size == 0? ">" : ">|";
-    for (size_t j = _size; j < size(); j++)
-      sbits += i & 1ul << (size()-j-1)? '1' : '0';
-    sbits += an_size == 0? "" : ">";
-    return sbits;    
-  };
-
-  auto cx_to_str = [&](std::complex<double> i) {
-    std::stringstream ss;
-    if (fabs(i.imag()) < 1e-14) {
-      double tmp = 1.0/pow(i.real(), 2);
-      int itmp = tmp;
-      if (itmp != 1 and tmp - double(itmp) < 1e-13) {
-        ss << (signbit(i.real())? '-' : '+') << std::left << std::setw(11)
-           << str{"1/sqrt(" + std::to_string(itmp) + ")"} << std::left
-           << std::setw(12) << ' ';
-      } else {
-        ss << std::showpos << std::fixed
-           << std::setprecision(9)  
-           << i.real() << std::setw(12) << ' ';
-      }
-    } else if (fabs(i.real()) < 1e-14) {
-      double tmp = 1.0/pow(i.imag(), 2);
-      int itmp = tmp;
-      if (itmp != 1 and tmp - double(itmp) < 1e-13) {
-        ss << std::left << std::setw(12) << ' ' 
-           << (signbit(i.imag())? '-' : '+')
-           << std::left << std::setw(11) 
-           << str{"i/sqrt(" + std::to_string(itmp) + ")"};
-      } else{
-        ss << std::left << std::setw(12) << ' '  
-           << std::showpos << std::fixed
-           << std::setprecision(8) << i.imag() << 'i';
-      }
-    } else {
-      double tmp = 1.0/pow(i.real(), 2);
-      int itmp = tmp;
-      if (itmp != 1 and tmp - double(itmp) < 1e-13) 
-        ss << (signbit(i.real())? '-' : '+') 
-           << std::left << std::setw(11)
-           << str{"1/sqtr(" + std::to_string(itmp) + ")"};
-      else
-        ss << std::showpos << std::fixed << std::setprecision(9) << i.real();
-      tmp = 1.0/pow(i.imag(), 2);
-      itmp = tmp;
-      if (itmp != 1 and tmp - double(itmp) < 1e-13) 
-        ss << (signbit(i.imag())? '-' : '+') 
-           << std::left << std::setw(11) 
-           << str{"i/sqrt(" + std::to_string(itmp) + ")"};
-      else
-        ss << std::showpos << std::fixed << std::setprecision(8) 
-           << i.imag() << 'i';
-    }
-    return ss.str();
-  };
-
   sync();
   std::stringstream out;
   if (state() == "vector") {
     for (auto i = qbits.begin(); i != qbits.end(); ++i) {
       if (abs((cx_double)*i) < 1e-14) continue; 
-      out << cx_to_str(*i)
-          << to_bits(i.row()) << std::endl;
+      out << utility::cx_to_str(*i)
+          << utility::to_bits(i.row(), _size, an_size) << std::endl;
     }
   } else if (state() == "matrix") {
     for (auto i = qbits.begin(); i != qbits.end(); ++i) {
-      auto aux = cx_to_str(*i);
+      auto aux = utility::cx_to_str(*i, false);
       out << "(" << i.row() << ", " << i.col() << std::left
-          << std::setw(5) << ")"
+          << std::setw(10) << ")"
           << (aux == ""? "1" : aux)  << std::endl;
     }
   }

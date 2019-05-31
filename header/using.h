@@ -31,6 +31,7 @@
 #include <memory>
 #include <Python.h>
 #include <armadillo>
+#include <iomanip>
 using size_t = long unsigned;
 using complex = std::complex<double>;
 using vec_complex = std::vector<std::complex<double>>;
@@ -49,3 +50,8 @@ using mat_ptr = std::shared_ptr<arma::sp_cx_mat>;
 using py_obj = PyObject*;
 using py_function = PyObject*;
 using py_iterator = PyObject*;
+
+namespace utility {
+  str cx_to_str(complex i, bool use_sqrt = true);
+  str to_bits(size_t i, size_t qsize, size_t asize);
+}

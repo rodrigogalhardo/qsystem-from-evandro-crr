@@ -1,6 +1,6 @@
 OBJ = src/gate.o src/qs_ancillas.o src/qs_errors.o
 OBJ += src/qs_make.o src/qs_evol.o src/qs_measure.o
-OBJ += src/qs_utility.o src/qsystem.o
+OBJ += src/qs_utility.o src/qsystem.o src/utility.o
 HEADER = $(wildcard header/*.h)
 
 OUT = qsystem/_qsystem.so
