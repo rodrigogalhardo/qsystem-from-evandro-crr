@@ -50,7 +50,11 @@ q.measure(0, 3)                           # measure q0, q1, q2
 print('final measurement =', q.bits())
 # final measurement = [1, 0, 0]
 ```
-
+## Installation
+```bash
+pip install QSystem
+```
+---------------------------
 Seed the [wiki](https://gitlab.com/evandro-crr/qsystem/wikis/home) and the
 [documentation](https://evandro-crr.gitlab.io/qsystem/index.html).
 
