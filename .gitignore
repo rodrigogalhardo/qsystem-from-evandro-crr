@@ -7,3 +7,4 @@ dist/
 qsystem/
 src/qsystem.cpp
 doxygen/documentation
+test.py
