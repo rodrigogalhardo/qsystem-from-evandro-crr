@@ -33,9 +33,7 @@ QSystem::QSystem(size_t nqbits,
                   size_t init) :
   _size{nqbits},
   _state{state},
-  _ops{new Gate_aux[nqbits]()},
   _sync{true},
-  qbits{1lu << nqbits, state == "matrix" ? 1lu << nqbits : 1},
   _bits{new Bit[nqbits]()}, 
   an_size{0},
   an_ops{nullptr},
@@ -43,14 +41,22 @@ QSystem::QSystem(size_t nqbits,
 {
   valid_state_str(state);
   valid_init(init, nqbits);
-  qbits(init, state == "matrix"? init : 0) = 1;
+  if (state == "bitwise") {
+    bwqbits[init] = 1;
+    _ops = nullptr;
+  } else {
+    qbits = sp_cx_mat{1lu << nqbits, state == "matrix" ? 1lu << nqbits : 1};
+    qbits(init, state == "matrix"? init : 0) = 1;
+    _ops = new Gate_aux[nqbits]();
+  }
+
   std::srand(seed);
 }
 
 
 /******************************************************/
 QSystem::~QSystem() {
-  delete[] _ops;
+  if (_ops) delete[] _ops;
   delete[] _bits;
   if (an_ops) delete[] an_ops;
   if (an_bits) delete[] an_bits;
@@ -70,7 +76,7 @@ bool QSystem::Gate_aux::busy() {
 /******************************************************/
 std::string QSystem::__str__() {
   sync();
-  std::stringstream out;
+  sstr out;
   if (state() == "vector") {
     for (auto i = qbits.begin(); i != qbits.end(); ++i) {
       if (abs((cx_double)*i) < 1e-14) continue; 
@@ -84,6 +90,11 @@ std::string QSystem::__str__() {
           << std::setw(10) << ")"
           << (aux == ""? "1" : aux)  << std::endl;
     }
+  } else if (state() == "bitwise") {
+    for (auto &ket : bwqbits) 
+      out << utility::cx_to_str(ket.second)
+          << utility::to_bits(ket.first, _size, an_size) 
+          << std::endl;
   }
   return out.str();
 }
@@ -95,6 +106,7 @@ size_t QSystem::size() {
 
 /******************************************************/
 PyObject* QSystem::get_qbits() {
+  valid_not_bw();
   sync();
   qbits.sync();
 
@@ -147,16 +159,34 @@ void QSystem::set_qbits(vec_size_t row_ind,
 void QSystem::change_to(std::string new_state) {
   valid_state_str(new_state);
 
-  if (new_state == _state) 
+  if (new_state == state()) 
     return;
 
-  if (new_state == "matrix") {
-    qbits = qbits*qbits.t();
-  } else if (new_state == "vector") {
-    sp_cx_mat nqbits{1ul << size(), 1};
-    for (size_t i = 0; i < 1ul << size(); i++)
-      nqbits(i,0) = sqrt(qbits(i,i).real());
-    qbits = nqbits;
+  if (state() == "vector") {
+    if (new_state == "matrix") {
+      qbits = qbits*qbits.t();
+    } else if (new_state == "bitwise") {
+      for (auto i = qbits.begin(); i != qbits.end(); ++i) {
+        bwqbits[i.row()] = (complex) *i;
+      } 
+      qbits.zeros();
+      delete[] _ops;
+      if (an_ops) delete[] an_ops;
+    }
+  } else if (state() == "matrix") {
+    sstr err;
+    err << "can not change the state from \"matrix\"";
+    throw std::runtime_error{err.str()};
+  } else if (state() == "bitwise") {
+    qbits = sp_cx_mat{1ul << size(), 1};
+    for (auto &ket : bwqbits) 
+      qbits(ket.first, 1) = ket.second;
+    
+    if (new_state == "matrix") 
+      qbits = qbits*qbits.t();
+
+    _ops = new Gate_aux[_size]();
+    an_ops = new Gate_aux[an_size]();
   }
   
   _state = new_state;
@@ -169,11 +199,13 @@ std::string QSystem::state() {
 
 /******************************************************/
 void QSystem::save(std::string path) {
+//TODO
   sync();
   qbits.save(path, arma_binary);
 }
 
 void QSystem::load(std::string path) {
+//TODO
   qbits.load(path, arma_binary);
   _size = log2(qbits.n_rows);
   _state = qbits.n_cols > 1 ? "matrix" : "vector";

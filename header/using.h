@@ -32,11 +32,14 @@
 #include <Python.h>
 #include <armadillo>
 #include <iomanip>
+#include <boost/unordered_map.hpp>
+
 using size_t = long unsigned;
 using complex = std::complex<double>;
-using vec_complex = std::vector<std::complex<double>>;
+using str = std::string;
+using vec_complex = std::vector<complex>;
 using vec_size_t = std::vector<size_t>;
-using vec_str = std::vector<std::string>;
+using vec_str = std::vector<str>;
 using vec_int = std::vector<int>;
 using vec_float = std::vector<double>;
 using cnot_pair = std::pair<size_t, vec_size_t>;
@@ -45,11 +48,11 @@ using u3_tuple = std::tuple<double, double, double>;
 using cut_pair = std::pair<size_t, size_t>;
 using r_pair = std::pair<char, double>;
 using sstr = std::stringstream;
-using str = std::string;
 using mat_ptr = std::shared_ptr<arma::sp_cx_mat>;
 using py_obj = PyObject*;
 using py_function = PyObject*;
 using py_iterator = PyObject*;
+using dict = boost::unordered_map<size_t, complex>;
 
 namespace utility {
   str cx_to_str(complex i, bool use_sqrt = true);

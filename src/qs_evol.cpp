@@ -34,27 +34,140 @@ void QSystem::evol(char gate,
                    bool inver) {
   valid_qbit("qbit", qbit);
 
-  valid_count(qbit, count);
-  sync(qbit, qbit+count);
-  for (size_t i = 0; i < count; i++) {
-    ops(qbit+i).tag = Gate_aux::GATE_1;
-    ops(qbit+i).data = gate;
-    ops(qbit+i).inver = inver;
-  }
+  if (state() != "bitwise") {
 
-  _sync = false;
+    valid_count(qbit, count);
+    sync(qbit, qbit+count);
+    for (size_t i = 0; i < count; i++) {
+      ops(qbit+i).tag = Gate_aux::GATE_1;
+      ops(qbit+i).data = gate;
+      ops(qbit+i).inver = inver;
+    }
+
+    _sync = false;
+  } else {
+    for (size_t k = 0; k < count; k++) {
+      dict bw_tmp;
+      switch (gate) {
+        case 'I':
+          return;
+
+        case 'X':
+          for (auto &i : bwqbits) {
+            size_t j = i.first ^ (1ul << (qbit+k));
+            bw_tmp[j] = i.second; 
+          }
+          bwqbits = bw_tmp;
+          break;
+
+        case 'Y':
+          for (auto& i : bwqbits) {
+            size_t j = i.first ^ (1ul << qbit+k);
+            if (i.first & (1ul << qbit))
+              bw_tmp[j] = i.second*complex(0, -1);
+            else
+              bw_tmp[j] = i.second*complex(0, 1);
+          }
+          bwqbits = bw_tmp;
+          break;
+            
+        case 'Z':
+          for (auto &i : bwqbits) 
+            if (i.first & (1ul << qbit+k))
+              bwqbits[i.first] *= -1;
+          break;
+            
+        case 'H':
+          for (auto &i : bwqbits) {
+            if (i.first & (1ul << qbit+k))
+              bw_tmp[i.first] -= i.second/std::sqrt(2);
+            else
+              bw_tmp[i.first] += i.second/std::sqrt(2);
+            if (std::abs(bw_tmp[i.first]) < 1e-10) 
+              bw_tmp.erase(i.first);
+            
+            size_t j = i.first ^ (1ul << qbit+k);
+            bw_tmp[j] += i.second/std::sqrt(2);
+            if (std::abs(bw_tmp[j]) < 1e-10) 
+              bw_tmp.erase(j);
+          }
+          bwqbits = bw_tmp;
+          break;
+            
+        case 'S':
+          for (auto &i : bwqbits) 
+            if (i.first & (1ul << qbit+k))
+              bwqbits[i.first] *= complex(0, 1);
+          break;
+            
+        case 'T':
+          for (auto &i : bwqbits) 
+            if (i.first & (1ul << qbit+k))
+              bwqbits[i.first] *= complex(1/std::sqrt(2), 1/std::sqrt(2));
+          break;
+      }
+    }
+  }
 }
 
 /******************************************************/
-void QSystem::r(char axis, double angle, size_t qbit, size_t count) {
+void QSystem::rot(char axis, double angle, size_t qbit, size_t count) {
   valid_gate("axis", axis);
 
-  sync(qbit, qbit+count);
-  for (size_t i = 0; i < count; i++) {
-    ops(qbit+i).tag = Gate_aux::R;
-    ops(qbit+i).data = r_pair{axis, angle};
+  if (state() != "bitwise") {
+    sync(qbit, qbit+count);
+    for (size_t i = 0; i < count; i++) {
+      ops(qbit+i).tag = Gate_aux::R;
+      ops(qbit+i).data = r_pair{axis, angle};
+    }
+    _sync = false;
+  } else {
+    for (size_t k = 0; k < count; k++) {
+      dict bw_tmp;
+      switch (axis) {
+        case 'X':
+          for (auto &i : bwqbits) {
+            bw_tmp[i.first] += i.second*cos(angle/2);
+            if (std::abs(bw_tmp[i.first]) < 1e-10) 
+              bw_tmp.erase(i.first);
+            
+            size_t j = i.first ^ (1ul << qbit+k);
+            bw_tmp[j] -= i.second*sin(angle/2)*complex(0, 1);
+            if (std::abs(bw_tmp[j]) < 1e-10) 
+              bw_tmp.erase(j);
+          }
+          bwqbits = bw_tmp;
+
+          break;
+
+        case 'Y':
+          for (auto &i : bwqbits) {
+            bw_tmp[i.first] += i.second*cos(angle/2);
+            if (std::abs(bw_tmp[i.first]) < 1e-10) 
+              bw_tmp.erase(i.first);
+            
+            size_t j = i.first ^ (1ul << qbit+k);
+            if (i.first & (1ul << qbit+k)) 
+              bw_tmp[j] -= i.second*sin(angle/2);
+            else 
+              bw_tmp[j] += i.second*sin(angle/2);
+
+            if (std::abs(bw_tmp[j]) < 1e-10) 
+              bw_tmp.erase(j);
+          }
+          bwqbits = bw_tmp;
+ 
+          break;
+        case 'Z':
+          for (auto &i : bwqbits) 
+            if (i.first & (1ul << qbit+k))
+              bwqbits[i.first] *= complex(cos(angle/2), sin(angle/2));
+            else 
+              bwqbits[i.first] *= -complex(cos(angle/2), sin(angle/2));
+          break;
+      }
+    }
   }
-  _sync = false;
 }
 
 /******************************************************/
@@ -63,12 +176,42 @@ void QSystem::u3(double theta,
                  double lambd,
                  size_t qbit, 
                  size_t count) {
-  sync(qbit, qbit+count);
-  for (size_t i = 0; i < count; i++) {
-    ops(qbit+i).tag = Gate_aux::U3;
-    ops(qbit+i).data = u3_tuple{theta, phi, lambd};
+  if (state() != "bitwise") {
+    sync(qbit, qbit+count);
+    for (size_t i = 0; i < count; i++) {
+      ops(qbit+i).tag = Gate_aux::U3;
+      ops(qbit+i).data = u3_tuple{theta, phi, lambd};
+    }
+    _sync = false;
+  } else {
+    for (size_t k = 0; k < count; k++) {
+      dict bw_tmp;
+      for (auto &i : bwqbits) {
+        size_t j = i.first ^ (1ul << qbit+k);
+        if (i.first & (1ul << qbit+k)) {
+          bw_tmp[i.first] += i.second*complex(cos(lambd+phi)*cos(theta/2), 
+                                              cos(theta/2)*sin(lambd+phi));
+          if (std::abs(bw_tmp[i.first]) < 1e-10) 
+            bw_tmp.erase(i.first);
+
+          bw_tmp[j] += i.second*(-complex(cos(lambd)*sin(theta/2), 
+                                          sin(lambd)*sin(theta/2)));
+          if (std::abs(bw_tmp[j]) < 1e-10) 
+            bw_tmp.erase(j);
+        } else {
+          bw_tmp[i.first] += i.second*cos(theta/2); 
+          if (std::abs(bw_tmp[i.first]) < 1e-10) 
+            bw_tmp.erase(i.first);
+
+          bw_tmp[j] += i.second*complex(cos(phi)*sin(theta/2), 
+                                        sin(phi)*sin(theta/2));
+          if (std::abs(bw_tmp[j]) < 1e-10) 
+            bw_tmp.erase(j);
+        }
+      }
+      bwqbits = bw_tmp;
+    }
   }
-  _sync = false;
 }
 
 /******************************************************/
@@ -76,24 +219,62 @@ void QSystem::u2(double phi,
                  double lambd,
                  size_t qbit, 
                  size_t count) {
-  sync(qbit, qbit+count);
-  for (size_t i = 0; i < count; i++) {
-    ops(qbit+i).tag = Gate_aux::U3;
-    ops(qbit+i).data = u3_tuple{M_PI/2, phi, lambd};
+  if (state() != "bitwise") {
+    sync(qbit, qbit+count);
+    for (size_t i = 0; i < count; i++) {
+      ops(qbit+i).tag = Gate_aux::U3;
+      ops(qbit+i).data = u3_tuple{M_PI/2, phi, lambd};
+    }
+    _sync = false;
+  } else {
+    for (size_t k = 0; k < count; k++) {
+      dict bw_tmp;
+      for (auto &i : bwqbits) {
+        size_t j = i.first ^ (1ul << qbit+k);
+        if (i.first & (1ul << qbit+k)) {
+          bw_tmp[i.first] += i.second*(complex(cos(lambd+phi), 
+                                              sin(lambd+phi))/sqrt(2));
+          if (std::abs(bw_tmp[i.first]) < 1e-10) 
+            bw_tmp.erase(i.first);
+
+          bw_tmp[j] += i.second*(-complex(cos(lambd), 
+                                          sin(lambd))/sqrt(2));
+          if (std::abs(bw_tmp[j]) < 1e-10) 
+            bw_tmp.erase(j);
+        } else {
+          bw_tmp[i.first] += i.second/sqrt(2); 
+          if (std::abs(bw_tmp[i.first]) < 1e-10) 
+            bw_tmp.erase(i.first);
+
+          bw_tmp[j] += i.second*(complex(cos(phi), 
+                                        sin(phi))/sqrt(2));
+          if (std::abs(bw_tmp[j]) < 1e-10) 
+            bw_tmp.erase(j);
+        }
+      }
+      bwqbits = bw_tmp;
+    }
   }
-  _sync = false;
 }
 
 /******************************************************/
 void QSystem::u1(double lambd,
                  size_t qbit, 
                  size_t count) {
-  sync(qbit, qbit+count);
-  for (size_t i = 0; i < count; i++) {
-    ops(qbit+i).tag = Gate_aux::U3;
-    ops(qbit+i).data = u3_tuple{0, 0, lambd};
+  if (state() == "bitwise") {
+    sync(qbit, qbit+count);
+    for (size_t i = 0; i < count; i++) {
+      ops(qbit+i).tag = Gate_aux::U3;
+      ops(qbit+i).data = u3_tuple{0, 0, lambd};
+    }
+    _sync = false;
+  } else {
+    for (size_t k = 0; k < count; k++) {
+      for (auto &i : bwqbits) 
+        if (i.first & (1ul << qbit+k))
+          bwqbits[i.first] *= complex(cos(lambd), sin(lambd));
+    }
   }
-  _sync = false;
 }
 
 /******************************************************/
