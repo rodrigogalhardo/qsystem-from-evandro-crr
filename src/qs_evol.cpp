@@ -294,10 +294,26 @@ void QSystem::apply(Gate gate, size_t qbit, size_t count, bool inver) {
 void QSystem::cnot(size_t target, vec_size_t control) {
   valid_qbit("target", target);
   valid_control(control);
-
-  auto [size_n, minq] = cut(target, control);
-  fill(Gate_aux::CNOT, minq, size_n);
-  ops(minq).data = cnot_pair{target, control};
+  if (state() != "bitwise") {
+    auto [size_n, minq] = cut(target, control);
+    fill(Gate_aux::CNOT, minq, size_n);
+    ops(minq).data = cnot_pair{target, control};
+  } else {
+    dict bw_tmp;
+    for (auto &i : bwqbits) {
+      bool tmp_ctrl = true;
+      for (auto ctrl : control) {
+        tmp_ctrl = tmp_ctrl and (i.first & (1ul << ctrl));
+      }
+      if (tmp_ctrl) {
+        size_t j = i.first ^ (1ul << target);
+        bw_tmp[j] = i.second;
+      } else {
+        bw_tmp[i.first] = i.second;
+      }
+    }
+    bwqbits = bw_tmp;
+  }
 }
 
 /******************************************************/
@@ -306,9 +322,26 @@ void QSystem::cphase(complex phase, size_t target, vec_size_t control) {
   valid_phase(phase);
   valid_control(control);
 
-  auto [size_n, minq] = cut(target, control);
-  fill(Gate_aux::CPHASE, minq, size_n);
-  ops(minq).data = cph_tuple{phase, target, control};
+  if (state() != "bitwise") {
+    auto [size_n, minq] = cut(target, control);
+    fill(Gate_aux::CPHASE, minq, size_n);
+    ops(minq).data = cph_tuple{phase, target, control};
+  } else {
+    dict bw_tmp;
+    for (auto &i : bwqbits) {
+      bool tmp_ctrl = true;
+      for (auto ctrl : control) {
+        tmp_ctrl = tmp_ctrl and (i.first & (1ul << ctrl));
+      }
+      if (tmp_ctrl) {
+        size_t j = i.first ^ (1ul << target);
+        bw_tmp[j] = i.second*phase;
+      } else {
+        bw_tmp[i.first] = i.second;
+      }
+    }
+    bwqbits = bw_tmp;
+  }
 }
 
 /******************************************************/
