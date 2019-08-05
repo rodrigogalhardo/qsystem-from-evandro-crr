@@ -27,7 +27,7 @@
 using namespace arma;
 
 /*********************************************************/
-Gate::Gate(mat_ptr mat) : mat{mat} {}
+Gate::Gate(mat_ptr mat, set_mat matbw) : mat{mat}, matbw{matbw} {}
 
 /*********************************************************/
 Gate::Gate(str path) {
@@ -59,20 +59,12 @@ str Gate::__str__() {
 }
 
 /*********************************************************/
-str Gate::__repr__() { 
-  sstr out;
-  size_t size = log2(mat->n_rows);
-  if (size == 1)
-    out <<"<1 qubit gate>";
-  else 
-    out << '<' << size <<" qubits gate>";
-
-  return out.str();
-}
-
-/*********************************************************/
 mat_ptr& Gate::get_mat() {
   return mat;
+}
+
+set& Gate::get_matbw(size_t i) {
+  return matbw[i];
 }
 
 /*********************************************************/
@@ -83,8 +75,15 @@ Gate Gate::make_gate(vec_complex matrix) {
         << "[u00, u01, u10, u11]";
     throw std::invalid_argument{err.str()};
   }
-  return std::make_shared<sp_cx_mat>(cx_mat{{{matrix[0], matrix[1]},
-                                             {matrix[2], matrix[3]}}});
+
+  set_mat matbw;
+  matbw[0].insert(std::make_pair(matrix[0], 0));
+  matbw[0].insert(std::make_pair(matrix[2], 1));
+  matbw[1].insert(std::make_pair(matrix[1], 0));
+  matbw[1].insert(std::make_pair(matrix[3], 1));
+  return Gate{std::make_shared<sp_cx_mat>(cx_mat{{{matrix[0], matrix[1]},
+                                             {matrix[2], matrix[3]}}}),
+         matbw};
 }
 
 /*********************************************************/
@@ -104,11 +103,14 @@ Gate Gate::make_mgate(size_t size,
   auto mp = std::make_shared<sp_cx_mat>(sizem, sizem);
   auto &m = *mp;
 
+  set_mat matbw;
+
   for (size_t i = 0; i < row.size(); i++) {
     m(row[i], col[i]) = value[i];
+    matbw[col[i]].insert(std::make_pair(value[i], row[i]));
   }
 
-  return mp;
+  return Gate{mp, matbw};
 }
 
 Gate Gate::make_cgate(str gates,
@@ -154,6 +156,8 @@ Gate Gate::make_cgate(str gates,
 
   auto cmp = std::make_shared<sp_cx_mat>(1ul << size, 1ul << size);
   auto& cm = *cmp;
+  
+  set_mat matbw;
 
   for (size_t i = 0; i < (1ul << size); i++) {
     bool cond = true;
@@ -163,12 +167,14 @@ Gate Gate::make_cgate(str gates,
     if (cond) {
       size_t row = (i ^ x);
       cm(row, i) = pow(-1, parity(i & z));
+      matbw[i].insert(std::make_pair(pow(-1, parity(i & z)), row));
     } else {
       cm(i,i) = 1;
+      matbw[i].insert(std::make_pair(1, i));
     }
   }
 
-  return cmp;
+  return Gate{cmp, matbw};
 }
 
 Gate Gate::make_fgate(PyObject* func,
@@ -185,6 +191,8 @@ Gate Gate::make_fgate(PyObject* func,
   }
 
   auto* it = PyObject_GetIter(iterator);
+
+  set_mat matbw;
   
   PyObject* pyj;
   while ((pyj = PyIter_Next(it))) {
@@ -195,6 +203,7 @@ Gate Gate::make_fgate(PyObject* func,
     auto j = PyLong_AsSize_t(pyj);
 
     m(i, j) = 1;
+    matbw[j].insert(std::make_pair(1, i));
    
     Py_DECREF(pyi);
     Py_DECREF(pyj);
@@ -202,6 +211,6 @@ Gate Gate::make_fgate(PyObject* func,
 
   Py_DECREF(it);
 
-  return mp;
+  return Gate{mp, matbw};
 }
 

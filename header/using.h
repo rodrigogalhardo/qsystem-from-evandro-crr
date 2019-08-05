@@ -28,16 +28,21 @@
 #include <complex>
 #include <utility>
 #include <sstream>
+#include <fstream>
 #include <memory>
 #include <Python.h>
 #include <armadillo>
 #include <iomanip>
 #include <boost/unordered_map.hpp>
+#include <boost/unordered_set.hpp>
+#include <boost/serialization/map.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
 
 using size_t = long unsigned;
 using complex = std::complex<double>;
 using str = std::string;
-using vec_complex = std::vector<complex>;
+using vec_complex = std::vector<std::complex<double>>;
 using vec_size_t = std::vector<size_t>;
 using vec_str = std::vector<str>;
 using vec_int = std::vector<int>;
@@ -53,6 +58,8 @@ using py_obj = PyObject*;
 using py_function = PyObject*;
 using py_iterator = PyObject*;
 using dict = boost::unordered_map<size_t, complex>;
+using set = boost::unordered_set<std::pair<complex, size_t>>;
+using set_mat = boost::unordered_map<size_t, set>;
 
 namespace utility {
   str cx_to_str(complex i, bool use_sqrt = true);

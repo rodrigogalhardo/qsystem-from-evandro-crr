@@ -44,7 +44,7 @@ class Gate {
      * \param mat sparce matrix pointer.
      * \sa Gate::make_gate Gate::make_mgate Gate::make_cgate Gate::make_fgate
      */
-    Gate(mat_ptr mat);
+    Gate(mat_ptr mat, set_mat matbw);
 
     //! Get a string with the matrix
     /*!
@@ -53,8 +53,6 @@ class Gate {
      *  \return String with the matrix.
      */
     str __str__();
-
-    str __repr__();
 
     //! Save the quantum gate in a file
     /*!
@@ -132,10 +130,10 @@ class Gate {
      * \sa QSystem
      */
     mat_ptr& get_mat();
+    set& get_matbw(size_t i);
 
     private:
     mat_ptr mat;
+    set_mat matbw;
 };
-
-
 

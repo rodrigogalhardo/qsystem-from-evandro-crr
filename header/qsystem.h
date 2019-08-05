@@ -67,7 +67,7 @@ class QSystem {
      */
     QSystem(size_t nqbits,
             size_t seed=42,
-               str state="vector",
+               str state="bitwise",
             size_t init=0);
 
     ~QSystem();
