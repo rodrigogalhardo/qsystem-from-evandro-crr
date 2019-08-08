@@ -23,6 +23,7 @@
  */                                                                               
 
 #include "../header/gate.h"
+#include "../header/microtar.h"
 
 using namespace arma;
 
@@ -31,13 +32,60 @@ Gate::Gate(mat_ptr mat, set_mat matbw) : mat{mat}, matbw{matbw} {}
 
 /*********************************************************/
 Gate::Gate(str path) {
-  mat = std::make_shared<sp_cx_mat>();
-  mat->load(path, arma_binary);
+  mtar_t tar;
+  mtar_header_t h;
+  char *m;
+
+  int err = mtar_open(&tar, path.c_str(), "r");
+  if (err < 0)
+    throw std::runtime_error{mtar_strerror(err)};
+
+  for (int i = 0; i < 2; i++) {
+    mtar_read_header(&tar, &h);
+    m = (char*) calloc(1, h.size);
+    mtar_read_data(&tar, m, h.size);
+    sstr ss;
+    ss.write(m, h.size);
+    free(m);
+
+    if (std::memcmp(h.name, "map", 3) == 0) {
+      boost::archive::text_iarchive iarch(ss);
+      iarch >> matbw;
+    } else if (std::memcmp(h.name, "mat", 3) == 0) {
+      mat = std::make_shared<sp_cx_mat>();
+      mat->load(ss, arma_binary);
+    }
+  }
 }
 
 /*********************************************************/
 void Gate::save(str path){
-  mat->save(path, arma_binary);
+  mtar_t tar;
+  mtar_open(&tar, path.c_str(), "w");
+
+  sstr ssmap;
+  boost::archive::text_oarchive oarchf(ssmap);
+  oarchf << matbw;
+
+  ssmap.seekg(0, std::ios::end);
+  size_t sizemap = ssmap.tellg();
+  ssmap.seekg(0, std::ios::beg);
+
+  mtar_write_file_header(&tar, "map", sizemap);
+  mtar_write_data(&tar, ssmap.str().c_str(), sizemap);
+
+  sstr ssmat;
+  mat->save(ssmat, arma_binary);
+
+  ssmat.seekg(0, std::ios::end);
+  size_t sizemat = ssmat.tellg();
+  ssmat.seekg(0, std::ios::beg);
+
+  mtar_write_file_header(&tar, "mat", sizemat);
+  mtar_write_data(&tar, ssmat.str().c_str(), sizemat);
+
+  mtar_finalize(&tar);
+  mtar_close(&tar);
 }
 
 /*********************************************************/

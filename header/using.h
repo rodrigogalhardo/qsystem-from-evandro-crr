@@ -25,6 +25,7 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <cstring>
 #include <complex>
 #include <utility>
 #include <sstream>
@@ -35,9 +36,11 @@
 #include <iomanip>
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
-#include <boost/serialization/map.hpp>
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/archive/binary_oarchive.hpp>
+#include <boost/serialization/boost_unordered_map.hpp>
+#include <boost/serialization/boost_unordered_set.hpp>
+#include <boost/serialization/complex.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
 
 using size_t = long unsigned;
 using complex = std::complex<double>;

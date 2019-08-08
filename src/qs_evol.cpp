@@ -279,7 +279,7 @@ void QSystem::u1(double lambd,
 
 /******************************************************/
 void QSystem::apply(Gate gate, size_t qbit, size_t count, bool inver) {
-  auto size_n = log2(gate.get_mat()->n_rows);
+  size_t size_n = log2(gate.get_mat()->n_rows);
   valid_count(qbit, count, size_n);
   if (state() != "bitwise") {
     sync(qbit, qbit+count*size_n);
@@ -292,9 +292,20 @@ void QSystem::apply(Gate gate, size_t qbit, size_t count, bool inver) {
   } else {
     dict bw_tmp;
     for (auto &i : bwqbits) {
-      //TODO
+      // i.first = x|y|z
+      size_t x = i.first & ((1ul << (size()-qbit))-1);
+      size_t y = i.first >> (size()-qbit+size_n);
+      y = y & ((1ul << size_n)-1);
+      size_t z = i.first & ((1ul << (size()-qbit+size_n))-1);
+      auto &setu = gate.get_matbw(y);
+      for (auto &j : setu) {
+        size_t xjz = x|(j.second << (size()-qbit+size_n))|z;
+        bw_tmp[xjz] += i.second*j.first;
+        if (std::abs(bw_tmp[xjz]) < 1e-10) 
+          bw_tmp.erase(xjz);
+      }
     }
-
+    bwqbits = bw_tmp;
   }
 }
 

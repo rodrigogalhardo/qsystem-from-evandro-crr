@@ -1,13 +1,14 @@
 OBJ = src/gate.o src/qs_ancillas.o src/qs_errors.o
 OBJ += src/qs_make.o src/qs_evol.o src/qs_measure.o
 OBJ += src/qs_utility.o src/qsystem.o src/utility.o
+OBJ += src/microtar.o
 HEADER = $(wildcard header/*.h)
 
 OUT = qsystem/_qsystem.so
 
 PYTHON = /usr/include/python3.7m/
 
-CXXFLAGS = -Wall -O2 -fPIC -std=c++17 -I$(PYTHON)
+CXXFLAGS = -Wall -O2 -fPIC -std=c++17 -lboost_serialization -I$(PYTHON)
 CLINK = -shared -Xlinker -export-dynamic
 
 all: $(OBJ)
@@ -15,6 +16,9 @@ all: $(OBJ)
 
 %.o: %.cpp $(HEADER)
 	$(CXX) -c $< -o $@ $(CXXFLAGS)
+
+%.o: %.c 
+	$(CC) -c $< -o $@ -O2 -fPIC
 
 %.cpp: %.i $(HEADER)
 	swig -c++ -python -o $@ $<  
