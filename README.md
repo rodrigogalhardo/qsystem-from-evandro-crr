@@ -50,6 +50,7 @@ q.measure(0, 3)                           # measure q0, q1, q2
 print('final measurement =', q.bits())
 # final measurement = [1, 0, 0]
 ```
+* [Shor's factoring algorithm using QSystem](https://nbviewer.jupyter.org/urls/gitlab.com/evandro-crr/qsystem/raw/1.1.0/example/factoring.ipynb)
 ## Installation
 ```bash
 pip install QSystem
