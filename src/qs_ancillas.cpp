@@ -27,9 +27,9 @@
 using namespace arma;
 
 /******************************************************/
-void QSystem::add_ancillas(size_t nqbits, size_t init) {
-  valid_init(init, nqbits);
-  if (nqbits == 0) {
+void QSystem::add_ancillas(size_t num_qbits, size_t init) {
+  valid_init(init, num_qbits);
+  if (num_qbits == 0) {
     throw std::invalid_argument{"\'an_num\' argument must be greater than 0"};
   } else if (an_size != 0) {
     sstr err;
@@ -39,13 +39,24 @@ void QSystem::add_ancillas(size_t nqbits, size_t init) {
 
   sync();
 
-  an_size = nqbits;
-  an_ops = new Gate_aux[an_size]();
-  an_bits = new Bit[an_size]();
+  an_size = num_qbits;
 
-  sp_cx_mat an_qbits{1ul << an_size, _representation == "matrix" ? 1lu << an_size : 1};
-  an_qbits(init, _representation == "matrix" ? init : 0) = 1;
-  qbits = kron(qbits, an_qbits);
+  if (representation() != "bitwise") {
+    an_ops = new Gate_aux[an_size]();
+
+    sp_cx_mat an_qbits{1ul << an_size, _representation == "matrix" ? 1lu << an_size : 1};
+    an_qbits(init, _representation == "matrix" ? init : 0) = 1;
+    qbits = kron(qbits, an_qbits);
+  } else {
+    dict bw_tmp;
+    for (auto &i : bwqbits) {
+      auto j = (i.first << num_qbits) | init;
+      bw_tmp[j] = i.second;
+    }
+    bwqbits.swap(bw_tmp);
+  }
+
+  an_bits = new Bit[an_size]();
 }
 
 /******************************************************/
@@ -79,16 +90,35 @@ void QSystem::rm_ancillas() {
     return qbitst;
   };
 
-  while (an_size) {
-    if (_representation == "vector")
-      qbits = tr_pure();
-    else if (_representation == "matrix")
-      qbits = tr_mix();
-    an_size--;
+  if (representation() != "bitwise") {
+    while (an_size) {
+      if (_representation == "vector")
+        qbits = tr_pure();
+      else if (_representation == "matrix")
+        qbits = tr_mix();
+      an_size--;
+    }
+
+    delete[] an_ops;
+    an_ops = nullptr;
+  } else {
+    dict bw_tmp;
+    
+    for (auto &i : bwqbits) {
+      auto j = i.first >> an_size;
+
+      if (bw_tmp.find(j) != bw_tmp.end()) {
+        bw_tmp[j] = complex{sqrt(pow(bw_tmp[j].real(), 2)+pow(i.second.real(), 2)),
+                            sqrt(pow(bw_tmp[j].imag(), 2)+pow(i.second.imag(), 2))};
+      } else {
+        bw_tmp[j] = i.second;
+      }
+    }
+
+    bwqbits.swap(bw_tmp);
+    an_size = 0;
   }
 
-  delete[] an_ops;
-  an_ops = nullptr;
   delete[] an_bits;
   an_bits = nullptr;
 }

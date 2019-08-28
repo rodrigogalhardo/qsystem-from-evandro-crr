@@ -112,6 +112,7 @@ mat_ptr& Gate::get_mat() {
   return mat;
 }
 
+/*********************************************************/
 set& Gate::get_bwgate(size_t i) {
   return bwgate[i];
 }

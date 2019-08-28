@@ -243,13 +243,13 @@ void QSystem::apply(Gate gate, size_t qbit, size_t count, bool invert) {
     dict bw_tmp;
     for (auto &i : bwqbits) {
       // i.first = x|y|z
-      size_t x = i.first & ((1ul << (size()-qbit))-1);
-      size_t y = i.first >> (size()-qbit+size_n);
+      size_t x = i.first & (((1ul << qbit)-1) << (size()-qbit));
+      size_t y = i.first >> (size()-qbit-size_n);
       y = y & ((1ul << size_n)-1);
-      size_t z = i.first & ((1ul << (size()-qbit+size_n))-1);
+      size_t z = i.first & ((1ul << (size()-qbit-size_n))-1);
       auto &setu = gate.get_bwgate(y);
       for (auto &j : setu) {
-        size_t xjz = x|(j.second << (size()-qbit+size_n))|z;
+        size_t xjz = x|(j.second << (size()-qbit-size_n))|z;
         bw_tmp[xjz] += i.second*j.first;
         if (std::abs(bw_tmp[xjz]) < 1e-10) 
           bw_tmp.erase(xjz);
