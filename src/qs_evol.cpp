@@ -26,6 +26,7 @@
 #include <algorithm>
 
 using namespace arma;
+using namespace std::complex_literals;
 
 /******************************************************/
 void QSystem::evol(char gate,
@@ -340,11 +341,35 @@ void QSystem::swap(size_t qbit_a, size_t qbit_b) {
 }
 
 /******************************************************/
-void QSystem::qft(size_t qbegin, size_t qend, bool invert) {
-  valid_range(qbegin, qend);
+void QSystem::qft(size_t qbit_begin, size_t qbit_end, bool invert) {
+  valid_range(qbit_begin, qbit_end);
+  auto size_n = qbit_end-qbit_begin;
+  if (representation() != "bitwise") {
+    fill(Gate_aux::QFT, qbit_begin, qbit_end-qbit_begin);
+    ops(qbit_begin).invert = invert;
+  } else {
+    double pi = acos(-1);
+    complex w = std::exp((2*pi*1i)/(pow(2, size_n)));
+    dict bw_tmp;
+   
+    for (auto &i : bwqbits) {
+      // i.first = x|y|z
+      size_t x = i.first & (((1ul << qbit_begin)-1) << (size()-qbit_begin));
+      size_t y = i.first >> (size()-qbit_begin-size_n);
+      y = y & ((1ul << size_n)-1);
+      size_t z = i.first & ((1ul << (size()-qbit_begin-size_n))-1);
+      
+      for (size_t j = 0; j < (1ul << size_n); j++) {
+        auto val = (1/sqrt(1 << size_n))*pow(w, y*j);
+        auto xjz = x|(j << (size()-qbit_begin-size_n))|z;
+        bw_tmp[xjz] += val*i.second;
+        if (std::abs(bw_tmp[xjz]) < 1e-10) 
+          bw_tmp.erase(xjz);
+      }
+    }
 
-  fill(Gate_aux::QFT, qbegin, qend-qbegin);
-  ops(qbegin).invert = invert;
+    bwqbits.swap(bw_tmp);
+  }
 }
 
 /******************************************************/
@@ -375,8 +400,8 @@ void QSystem::sync() {
 }
 
 /******************************************************/
-void QSystem::sync(size_t qbegin, size_t qend) {
-  for (size_t i = qbegin; i < qend; i++) {
+void QSystem::sync(size_t qbit_begin, size_t qbit_end) {
+  for (size_t i = qbit_begin; i < qbit_end; i++) {
     if (ops(i).busy()) {
       sync();
       break;

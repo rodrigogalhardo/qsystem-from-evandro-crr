@@ -26,17 +26,11 @@ all: $(OBJ)
 	mv src/qsystem.py qsystem/__init__.py
 	patch qsystem/__init__.py src/qsystem.py.patch
 
-dist: src/qsystem.cpp qsystem/__init__.py armadillo-code serialization unordered
+dist: src/qsystem.cpp qsystem/__init__.py armadillo-code 
 	python setup.py sdist 
 
 armadillo-code:
 	git clone https://gitlab.com/conradsnicta/armadillo-code.git --branch 9.600.x
-
-serialization:
-	git clone https://github.com/boostorg/serialization.git
-
-unordered:
-	git clone https://github.com/boostorg/unordered.git
 
 install: dist
 	pip install dist/*
@@ -50,4 +44,4 @@ clean:
 	rm -rf build dist qsystem QSystem.egg-info 
 	
 clean-all: clean
-	rm -rf serialization unordered armadillo-code
+	rm -rf armadillo-code

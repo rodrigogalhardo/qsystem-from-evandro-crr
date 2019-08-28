@@ -47,14 +47,25 @@ void QSystem::measure(size_t qbit, size_t count) {
       for (auto i = m_aux.begin(); i != m_aux.end(); ++i) 
         if (~i.row() & 1ul << (size()-qbit-1)) 
           pm += (*i).real();
+    } else {
+      for (auto &i : bwqbits) {
+        if (~i.first & 1ul << (size()-qbit-1)) {
+          auto valor = abs(i.second);
+          pm += valor*valor;
+        }
+      }
     }
 
-    auto result = [&](Bit mea, double pm) {
-      auto lnot = mea == ZERO? [](size_t i) { return ~i; } 
-                             : [](size_t i) { return i; };
-      if (qbit < _size) _bits[qbit] = mea;
-        else an_bits[qbit-_size] = mea;
+    auto mea = pm != 0 and double(std::rand()) / double(RAND_MAX) <= pm? ZERO : ONE;
+    pm = mea == ZERO? pm : 1.0 - pm;
 
+    auto lnot = mea == ZERO? [](size_t i) { return ~i; } 
+                            : [](size_t i) { return i; };
+
+    if (qbit < _size) _bits[qbit] = mea;
+      else an_bits[qbit-_size] = mea;
+
+    if (representation() != "bitwise") {
       sp_cx_mat qbitsm{1ul << size(),
                        _representation == "vector"? 1 : 1ul << size()};
 
@@ -69,13 +80,15 @@ void QSystem::measure(size_t qbit, size_t count) {
             qbitsm(i.row(), i.col()) = (complex)(*i)/pm;
       }
 
-      return qbitsm;
-    };
-    
-    if (pm != 0 and double(std::rand()) / double(RAND_MAX) <= pm) 
-      qbits = result(ZERO, pm);
-    else 
-      qbits = result(ONE, 1.0 - pm);
+      qbits = qbitsm;
+    } else {
+      dict bw_tmp;
+      for (auto &i : bwqbits) {
+        if (lnot(i.first) & 1ul << (size()-qbit-1))  
+          bw_tmp[i.first] = i.second/sqrt(pm);
+      }
+      bwqbits.swap(bw_tmp);
+    }
   }
 }
 
