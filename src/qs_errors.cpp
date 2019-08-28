@@ -32,11 +32,11 @@ void QSystem::flip(char gate, size_t qbit, double p) {
   valid_qbit("qbit", qbit);
   valid_p(p);
 
-  if (_state == "vector") {
+  if (_representation == "vector") {
     if (auto pr = double(std::rand())/double(RAND_MAX); p != 0 and pr <= p) 
       evol(gate, qbit);
 
-  } else if (_state == "matrix") {
+  } else if (_representation == "matrix") {
     sync();
     sp_cx_mat E0 = make_gate(gates[gate], qbit)*sqrt(p);
 

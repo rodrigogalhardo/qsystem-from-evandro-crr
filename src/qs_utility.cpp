@@ -27,27 +27,27 @@
 using namespace arma;
 
 /******************************************************/
-QSystem::QSystem(size_t nqbits,
+QSystem::QSystem(size_t num_qbits,
                   size_t seed,
-             std::string state,
+             std::string representation,
                   size_t init) :
-  _size{nqbits},
-  _state{state},
+  _size{num_qbits},
+  _representation{representation},
   _sync{true},
-  _bits{new Bit[nqbits]()}, 
+  _bits{new Bit[num_qbits]()}, 
   an_size{0},
   an_ops{nullptr},
   an_bits{nullptr}
 {
-  valid_state_str(state);
-  valid_init(init, nqbits);
-  if (state == "bitwise") {
+  valid_state_str(representation);
+  valid_init(init, num_qbits);
+  if (representation == "bitwise") {
     bwqbits[init] = 1;
     _ops = nullptr;
   } else {
-    qbits = sp_cx_mat{1lu << nqbits, state == "matrix" ? 1lu << nqbits : 1};
-    qbits(init, state == "matrix"? init : 0) = 1;
-    _ops = new Gate_aux[nqbits]();
+    qbits = sp_cx_mat{1lu << num_qbits, representation == "matrix" ? 1lu << num_qbits : 1};
+    qbits(init, representation == "matrix"? init : 0) = 1;
+    _ops = new Gate_aux[num_qbits]();
   }
 
   std::srand(seed);
@@ -63,7 +63,7 @@ QSystem::~QSystem() {
 }
 
 /******************************************************/
-QSystem::Gate_aux::Gate_aux() : tag{GATE_1}, data{'I'}, size{1}, inver{false} {}
+QSystem::Gate_aux::Gate_aux() : tag{GATE_1}, data{'I'}, size{1}, invert{false} {}
 
 /******************************************************/
 QSystem::Gate_aux::~Gate_aux() {}
@@ -77,20 +77,20 @@ bool QSystem::Gate_aux::busy() {
 std::string QSystem::__str__() {
   sync();
   sstr out;
-  if (state() == "vector") {
+  if (representation() == "vector") {
     for (auto i = qbits.begin(); i != qbits.end(); ++i) {
       if (abs((cx_double)*i) < 1e-14) continue; 
       out << utility::cx_to_str(*i)
           << utility::to_bits(i.row(), _size, an_size) << std::endl;
     }
-  } else if (state() == "matrix") {
+  } else if (representation() == "matrix") {
     for (auto i = qbits.begin(); i != qbits.end(); ++i) {
       auto aux = utility::cx_to_str(*i, false);
       out << "(" << i.row() << ", " << i.col() << std::left
           << std::setw(10) << ")"
           << (aux == ""? "1" : aux)  << std::endl;
     }
-  } else if (state() == "bitwise") {
+  } else if (representation() == "bitwise") {
     for (auto &ket : bwqbits) 
       out << utility::cx_to_str(ket.second)
           << utility::to_bits(ket.first, _size, an_size) 
@@ -142,16 +142,16 @@ PyObject* QSystem::get_qbits() {
 void QSystem::set_qbits(vec_size_t row_ind,
                         vec_size_t col_ptr,
                        vec_complex values,
-                            size_t nqbits,
-                       std::string state) {
+                            size_t num_qbits,
+                       std::string representation) {
   qbits = sp_cx_mat(conv_to<uvec>::from(row_ind),
                     conv_to<uvec>::from(col_ptr),
                     cx_vec(values),
-                    1ul << nqbits,
-                    state == "vector"? 1ul : 1ul << nqbits);
+                    1ul << num_qbits,
+                    representation == "vector"? 1ul : 1ul << num_qbits);
                     
-  this->_state = state;
-  _size = nqbits;
+  this->_representation = representation;
+  _size = num_qbits;
   clear();
 }
 
@@ -159,10 +159,10 @@ void QSystem::set_qbits(vec_size_t row_ind,
 void QSystem::change_to(std::string new_state) {
   valid_state_str(new_state);
 
-  if (new_state == state()) 
+  if (new_state == representation()) 
     return;
 
-  if (state() == "vector") {
+  if (representation() == "vector") {
     if (new_state == "matrix") {
       qbits = qbits*qbits.t();
     } else if (new_state == "bitwise") {
@@ -173,11 +173,11 @@ void QSystem::change_to(std::string new_state) {
       delete[] _ops;
       if (an_ops) delete[] an_ops;
     }
-  } else if (state() == "matrix") {
+  } else if (representation() == "matrix") {
     sstr err;
-    err << "can not change the state from \"matrix\"";
+    err << "can not change the representation from \"matrix\"";
     throw std::runtime_error{err.str()};
-  } else if (state() == "bitwise") {
+  } else if (representation() == "bitwise") {
     qbits = sp_cx_mat{1ul << size(), 1};
     for (auto &ket : bwqbits) 
       qbits(ket.first, 1) = ket.second;
@@ -189,12 +189,12 @@ void QSystem::change_to(std::string new_state) {
     an_ops = new Gate_aux[an_size]();
   }
   
-  _state = new_state;
+  _representation = new_state;
 }
 
 /******************************************************/
-std::string QSystem::state() {
-  return _state;
+std::string QSystem::representation() {
+  return _representation;
 }
 
 /******************************************************/
@@ -208,7 +208,7 @@ void QSystem::load(std::string path) {
 //TODO
   qbits.load(path, arma_binary);
   _size = log2(qbits.n_rows);
-  _state = qbits.n_cols > 1 ? "matrix" : "vector";
+  _representation = qbits.n_cols > 1 ? "matrix" : "vector";
   clear();
 }
 
@@ -228,4 +228,3 @@ void QSystem::clear() {
   _ops = new Gate_aux[_size]();
   _bits = new Bit[_size]();
 }
-

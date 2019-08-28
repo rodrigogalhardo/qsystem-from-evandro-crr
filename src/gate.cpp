@@ -28,7 +28,7 @@
 using namespace arma;
 
 /*********************************************************/
-Gate::Gate(mat_ptr mat, set_mat matbw) : mat{mat}, matbw{matbw} {}
+Gate::Gate(mat_ptr mat, set_mat bwgate) : mat{mat}, bwgate{bwgate} {}
 
 /*********************************************************/
 Gate::Gate(str path) {
@@ -50,7 +50,7 @@ Gate::Gate(str path) {
 
     if (std::memcmp(h.name, "map", 3) == 0) {
       boost::archive::text_iarchive iarch(ss);
-      iarch >> matbw;
+      iarch >> bwgate;
     } else if (std::memcmp(h.name, "mat", 3) == 0) {
       mat = std::make_shared<sp_cx_mat>();
       mat->load(ss, arma_binary);
@@ -65,7 +65,7 @@ void Gate::save(str path){
 
   sstr ssmap;
   boost::archive::text_oarchive oarchf(ssmap);
-  oarchf << matbw;
+  oarchf << bwgate;
 
   ssmap.seekg(0, std::ios::end);
   size_t sizemap = ssmap.tellg();
@@ -103,6 +103,7 @@ str Gate::__str__() {
         << std::setw(10) << ")"
         << (aux == ""? "1" : aux)  << std::endl;
   }
+
   return out.str();
 }
 
@@ -111,12 +112,12 @@ mat_ptr& Gate::get_mat() {
   return mat;
 }
 
-set& Gate::get_matbw(size_t i) {
-  return matbw[i];
+set& Gate::get_bwgate(size_t i) {
+  return bwgate[i];
 }
 
 /*********************************************************/
-Gate Gate::make_gate(vec_complex matrix) {
+Gate Gate::from_matrix(vec_complex matrix) {
   if (matrix.size() != 4) {
     sstr err;
     err << "\'matrix\' argument must have exactly 4 elements: "
@@ -124,21 +125,21 @@ Gate Gate::make_gate(vec_complex matrix) {
     throw std::invalid_argument{err.str()};
   }
 
-  set_mat matbw;
-  matbw[0].insert(std::make_pair(matrix[0], 0));
-  matbw[0].insert(std::make_pair(matrix[2], 1));
-  matbw[1].insert(std::make_pair(matrix[1], 0));
-  matbw[1].insert(std::make_pair(matrix[3], 1));
+  set_mat bwgate;
+  bwgate[0].insert(std::make_pair(matrix[0], 0));
+  bwgate[0].insert(std::make_pair(matrix[2], 1));
+  bwgate[1].insert(std::make_pair(matrix[1], 0));
+  bwgate[1].insert(std::make_pair(matrix[3], 1));
   return Gate{std::make_shared<sp_cx_mat>(cx_mat{{{matrix[0], matrix[1]},
-                                             {matrix[2], matrix[3]}}}),
-         matbw};
+                                                  {matrix[2], matrix[3]}}}),
+              bwgate};
 }
 
 /*********************************************************/
-Gate Gate::make_mgate(size_t size, 
-                  vec_size_t row,
-                  vec_size_t col,
-                 vec_complex value) {
+Gate Gate::from_sp_matrix(size_t size, 
+                      vec_size_t row,
+                      vec_size_t col,
+                     vec_complex value) {
   if (row.size() != col.size()
       or row.size() != value.size()
       or col.size() != value.size()) {
@@ -147,21 +148,21 @@ Gate Gate::make_mgate(size_t size,
     throw std::invalid_argument{err.str()};
   }
 
-  auto sizem = 1ul << size;
-  auto mp = std::make_shared<sp_cx_mat>(sizem, sizem);
+  auto mat_size = 1ul << size;
+  auto mp = std::make_shared<sp_cx_mat>(mat_size, mat_size);
   auto &m = *mp;
 
-  set_mat matbw;
+  set_mat bwgate;
 
   for (size_t i = 0; i < row.size(); i++) {
     m(row[i], col[i]) = value[i];
-    matbw[col[i]].insert(std::make_pair(value[i], row[i]));
+    bwgate[col[i]].insert(std::make_pair(value[i], row[i]));
   }
 
-  return Gate{mp, matbw};
+  return Gate{mp, bwgate};
 }
 
-Gate Gate::make_cgate(str gates,
+Gate Gate::cxz_gate(str gates,
                  vec_size_t control) {
   if (control.size() == 0) {
     sstr err;
@@ -205,7 +206,7 @@ Gate Gate::make_cgate(str gates,
   auto cmp = std::make_shared<sp_cx_mat>(1ul << size, 1ul << size);
   auto& cm = *cmp;
   
-  set_mat matbw;
+  set_mat bwgate;
 
   for (size_t i = 0; i < (1ul << size); i++) {
     bool cond = true;
@@ -215,19 +216,19 @@ Gate Gate::make_cgate(str gates,
     if (cond) {
       size_t row = (i ^ x);
       cm(row, i) = pow(-1, parity(i & z));
-      matbw[i].insert(std::make_pair(pow(-1, parity(i & z)), row));
+      bwgate[i].insert(std::make_pair(pow(-1, parity(i & z)), row));
     } else {
       cm(i,i) = 1;
-      matbw[i].insert(std::make_pair(1, i));
+      bwgate[i].insert(std::make_pair(1, i));
     }
   }
 
-  return Gate{cmp, matbw};
+  return Gate{cmp, bwgate};
 }
 
-Gate Gate::make_fgate(PyObject* func,
-                   size_t size,
-                PyObject* iterator) {
+Gate Gate::from_func(PyObject* func,
+                       size_t size,
+                    PyObject* iterator) {
 
   auto mp = std::make_shared<sp_cx_mat>(1ul << size, 1ul << size);
   auto &m = *mp;
@@ -240,7 +241,7 @@ Gate Gate::make_fgate(PyObject* func,
 
   auto* it = PyObject_GetIter(iterator);
 
-  set_mat matbw;
+  set_mat bwgate;
   
   PyObject* pyj;
   while ((pyj = PyIter_Next(it))) {
@@ -251,7 +252,7 @@ Gate Gate::make_fgate(PyObject* func,
     auto j = PyLong_AsSize_t(pyj);
 
     m(i, j) = 1;
-    matbw[j].insert(std::make_pair(1, i));
+    bwgate[j].insert(std::make_pair(1, i));
    
     Py_DECREF(pyi);
     Py_DECREF(pyj);
@@ -259,6 +260,6 @@ Gate Gate::make_fgate(PyObject* func,
 
   Py_DECREF(it);
 
-  return Gate{mp, matbw};
+  return Gate{mp, bwgate};
 }
 

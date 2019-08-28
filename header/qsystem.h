@@ -40,16 +40,14 @@ class QSystem {
               U3, CNOT, CPHASE,
               SWAP, QFT} tag;
 
-    std::variant<char,
-                 r_pair, 
-                 str,
-                 mat_ptr,
+    std::variant<char, r_pair, 
+                 str, mat_ptr,
                  cnot_pair,
                  u3_tuple,
                  cph_tuple> data;
 
     size_t size;
-    bool   inver;
+    bool   invert;
   };
 
   enum Bit {NONE, ZERO, ONE};
@@ -57,17 +55,17 @@ class QSystem {
   public:
     //! Constructor 
     /*!
-     * The qubits are initialized in the state \f$\left|init\right>\f$.
+     * The qubits are initialized in the state \f$\left|\text{init}\right>\f$.
      *
-     * \param nqbits number of qubits in the system.
+     * \param num_qbits number of qubits in the system.
      * \param seed for the pseudorandom number generator.
-     * \param state representation of the system, use `"vector"` for vector.
+     * \param representation of the system, use `"bitwise"`, `"vector"` or
+     * `"matrix"` (for density matrix).
      * \param init initial state.
-     * state and `"matrix"` for density matrix
      */
-    QSystem(size_t nqbits,
+    QSystem(size_t num_qbits,
             size_t seed=42,
-               str state="bitwise",
+               str representation="bitwise",
             size_t init=0);
 
     ~QSystem();
@@ -108,14 +106,14 @@ class QSystem {
      * \param gate name of the gate that will be user.
      * \param qbit qubit affected by the gate.
      * \param count number of successive repetitions of the gate.
-     * \param inver if true, apply the inverse quantum gate.
+     * \param invert if true, apply the inverse quantum gate.
      * \sa QSystem::rot QSystem::u3 QSystem::u2 QSystem::u1
      * QSystem::apply QSystem::cnot QSystem::cphase QSystem::qft QSystem::swap
      */
     void evol(char gate,
             size_t qbit, 
             size_t count=1,
-              bool inver=false);
+              bool invert=false);
 
     //! Rotate a qubit in X, Y or Z axis
     /*! 
@@ -142,9 +140,9 @@ class QSystem {
      * QSystem::apply QSystem::cnot QSystem::cphase QSystem::qft QSystem::swap
      */
     void rot(char axis,
-         double angle,
-         size_t qbit, 
-         size_t count=1);
+           double angle,
+           size_t qbit, 
+           size_t count=1);
 
     //! Apply an arbitrary u3 gate
     /*!
@@ -223,16 +221,16 @@ class QSystem {
      * \param gate instace of Gate class
      * \param qbit qubit affected by the gate.
      * \param count number of successive repetitions of the gate. 
-     * \param inver if true, apply the inverse quantum gate.
+     * \param invert if true, apply the inverse quantum gate.
      * \sa QSystem::evol QSystem::rot QSystem::u3 QSystem::u2 QSystem::u1
      * QSystem::apply QSystem::cnot QSystem::cphase QSystem::qft QSystem::swap
      */
-    void apply(Gate gate, size_t qbit, size_t count=1, bool inver=false);
+    void apply(Gate gate, size_t qbit, size_t count=1, bool invert=false);
 
     //! Apply a controlled not 
     /*!
      * Apply a not in the `target` qubit if all the `control` qubits are in the
-     * state \f$\left|1\right>\f$.
+     * representation \f$\left|1\right>\f$.
      *
      * \param target target qubit.
      * \param control list of control qubits.
@@ -243,9 +241,9 @@ class QSystem {
 
     //! Apply a controlled phase
     /*!
-     * Apply \f$\begin{bmatrix}1&0\\0&e^\phi\end{bmatrix}\f$, whare
+     * Apply \f$\begin{bmatrix}1&0\\0&e^\phi\end{bmatrix}\f$, where
      * \f$e^\phi\f$ = `phase`, in the `target` qubit if all the `control`
-     * qubits are in the state \f$\left|1\right>\f$.
+     * qubits are in the representation \f$\left|1\right>\f$.
      *
      * \param phase \f$e^\phi\f$ value.
      * \param target target qubit.
@@ -257,15 +255,15 @@ class QSystem {
 
     //! Apply a quantum Fourier transformation
     /*!
-     * Apply the QFT in the range of qubits (`qbegin`, `qend`].
+     * Apply the QFT in the range of qubits (`qbit_begin`, `qbit_end`].
      *
-     * \param qbegin first qubit affected. 
-     * \param qend last qubit affected +1.
-     * \param inver if true, apply the inverse quantum gate.
+     * \param qbit_begin first qubit affected. 
+     * \param qbit_end last qubit affected +1.
+     * \param invert if true, apply the inverse quantum gate.
      * \sa QSystem::evol QSystem::rot QSystem::u3 QSystem::u2 QSystem::u1
      * QSystem::apply QSystem::cnot QSystem::cphase QSystem::swap
      */
-    void qft(size_t qbegin, size_t qend, bool inver=false);
+    void qft(size_t qbit_begin, size_t qbit_end, bool invert=false);
 
     //! Swap two qubit
     /*!
@@ -296,7 +294,7 @@ class QSystem {
 
     //! Get the measurements results
     /*! 
-     * The measurements results are stored in a list. Whare the n-th item is
+     * The measurements results are stored in a list. Where the n-th item is
      * the measurement result of the qubit n. If the n-th qubits has never been
      * measured it's value is `None`.
      *
@@ -312,7 +310,7 @@ class QSystem {
      *    E_0 = \sqrt{p}\sigma\\
      *    E_1 = \sqrt{1-p}I,
      * \f]
-     * whare \f$\sigma\f$ is \f$\begin{bmatrix}1&0\\0&1\end{bmatrix}\f$ if
+     * where \f$\sigma\f$ is \f$\begin{bmatrix}1&0\\0&1\end{bmatrix}\f$ if
      * `gate` is ```'X'```,  \f$\begin{bmatrix}1&0\\0&1\end{bmatrix}\f$ if
      * `gate` is ```'Z'``` or \f$\begin{bmatrix}1&0\\0&-1\end{bmatrix}\f$ if
      * `gate` is ```'Y'```.
@@ -355,7 +353,7 @@ class QSystem {
      *    \mathcal{E}(\rho) = \left(1-{3p\over4}\right)\rho
      *    +{p\over4}(X\rho X+Y\rho Y+Z\rho Z),
      * \f]
-     * that takes the qubit to the maximally mixed state with probability `p`.
+     * that takes the qubit to the maximally mixed representation with probability `p`.
      *
      * The system must be in density matrix representation to use this method.
      *
@@ -398,12 +396,12 @@ class QSystem {
      */
     void sum(size_t qbit, vec_str kraus, vec_float p);
 
-    //! Get system state in a string
+    //! Get system representation in a string
     /*!
      *  This method is used in Python to cast a instance to `str`.
      *
-     * \return String with the system state.
-     * \sa QSystem::size QSystem::state
+     * \return String with the system representation.
+     * \sa QSystem::size QSystem::representation
      */
     str __str__();
 
@@ -412,20 +410,19 @@ class QSystem {
      * The ancillary qubits are include in the count.
      *
      * \return Number of qubits in the system.
-     * \sa QSystem::state 
+     * \sa QSystem::representation 
      */
     size_t size();
 
     //! Get the system representation
     /*!
-     * \return `"vector"` for vector representation and `"matrix"` for density
-     * matrix.
+     * \return `"bitwise"`, `"vector"` or `"matrix"` (for density matrix).
      *
      * \sa QSystem::size QSystem::change_to
      */
-    str state();
+    str representation();
 
-    //! Save the quantum state in a file
+    //! Save the quantum representation in a file
     /*!
      * The file is in a machine dependent binary format defined by the library
      * Armadillo.
@@ -435,7 +432,7 @@ class QSystem {
      */
     void save(str path);
 
-    //! Load the quantum state from a file
+    //! Load the quantum representation from a file
     /*!
      * When load, all qubits are set to non-ancillary.
      *
@@ -448,14 +445,13 @@ class QSystem {
     /*!
      * The change from vector representation to density matrix is done by
      * \f$\left|\psi\right> \rightarrow
-     * \left|\psi\right>\mkern-7mu\left<\psi\right|\f$. But, in the change from
-     * density matrix to vector representation, just the measurement
-     * probability is maintained. 
-     *
-     * \param new_state use "vector" to change vector representation a
-     * \sa QSystem::state
+     * \left|\psi\right>\mkern-7mu\left<\psi\right|\f$. It is not possible 
+     * to change from density matrix representation to any other representation.
+     * 
+     * \param new_representation use "vector" to change vector representation a
+     * \sa QSystem::representation
      */
-    void change_to(str new_state);
+    void change_to(str new_representation);
 
     //! Get the matrix of the quantum system 
     /*!
@@ -480,40 +476,40 @@ class QSystem {
      *     from math import log2
      *     m = sparse.csc_matrix(m)
      *     if m.shape[0] == m.shape[1]:
-     *         state = 'matrix'
+     *         representation = 'matrix'
      *     else:
-     *         state = 'vector'
+     *         representation = 'vector'
      *     size = int(log2(m.shape[0]))
-     *     q.set_qbits(m.indices.tolist(), m.indptr.tolist(), m.data.tolist(), size, state)
+     *     q.set_qbits(m.indices.tolist(), m.indptr.tolist(), m.data.tolist(), size, representation)
      * ```
      * 
      * \param row_ind row indices.
      * \param col_ptr column pointers.
      * \param values non-zero values.
-     * \param nqbits number of qubits.
-     * \param state representation.
+     * \param num_qbits number of qubits.
+     * \param representation representation.
      * \sa QSystem::get_qbits
      */
     void set_qbits(vec_size_t row_ind,
                    vec_size_t col_ptr,
                   vec_complex values,
-                       size_t nqbits,
-                  str state);
+                       size_t num_qbits,
+                          str representation);
 
     //! Add ancillary qubits
     /*!
      * The ancillaries qubits are added to the end of the system and can be used in 
      * any method.
      *
-     * \param nqbits number of ancillas added.
-     * \param init incitial state of the ancillas.
+     * \param num_qbits number of ancillas added.
+     * \param init initial state of the ancillas.
      * \sa QSystem::rm_ancillas
      */
-    void add_ancillas(size_t nqbits, size_t init=0);
+    void add_ancillas(size_t num_qbits, size_t init=0);
 
     //! Remove all ancillary qubits
     /*!
-     * If the state is in vector representation the ancillas are measured
+     * If the state is in vector or bitwise representation the ancillas are measured
      * before been removed. If the state is in density matrix representation,
      * the ancillas are removed by a partial trace operation, without been
      * measured.
@@ -525,15 +521,22 @@ class QSystem {
   private:
     /* src/qs_evol.cpp */
     void            sync();
-    void            sync(size_t qbegin, size_t qend);
+    void            sync(size_t qbit_begin, size_t qbit_end);
     Gate_aux&       ops(size_t index);
     arma::sp_cx_mat get_gate(Gate_aux &op);
     cut_pair        cut(size_t &target, vec_size_t &control);
     void            fill(Gate_aux::Tag tag, size_t qbit, size_t size_n);
 
+    void            evol_x(size_t qbit);
+    void            evol_y(size_t qbit);
+    void            evol_z(size_t qbit);
+    void            evol_s(size_t qbit);
+    void            evol_t(size_t qbit);
+    void            evol_h(size_t qbit);
+
     /* src/qs_make.cpp */
     arma::sp_cx_mat make_gate(arma::sp_cx_mat gate, size_t qbit);
-    arma::sp_cx_mat make_r(char axis, double angle);
+    arma::sp_cx_mat make_rot(char axis, double angle);
     arma::sp_cx_mat make_cnot(size_t target,
                           vec_size_t control,
                               size_t size_n);
@@ -550,7 +553,7 @@ class QSystem {
 
     /*--------------------*/
     size_t          _size;
-    str     _state;
+    str             _representation;
     Gate_aux*       _ops;
     bool            _sync;
     arma::sp_cx_mat qbits;
@@ -584,13 +587,13 @@ class QSystem {
     inline void valid_control(vec_size_t &control);
     inline void valid_phase(complex phase);
     inline void valid_swap(size_t qbit_a, size_t qbit_b);
-    inline void valid_range(size_t qbegin, size_t qend);
+    inline void valid_range(size_t qbit_begin, size_t qbit_end);
     inline void valid_gate(str name, char gate);
     inline void valid_p(double p);
     inline void valid_state();
     inline void valid_krau(vec_str &kraus);
-    inline void valid_state_str(str &state);
-    inline void valid_init(size_t init, size_t nqbits);
+    inline void valid_state_str(str &representation);
+    inline void valid_init(size_t init, size_t num_qbits);
     inline void valid_not_bw();
 
 };
@@ -610,7 +613,7 @@ inline void QSystem::valid_count(size_t qbit, size_t count, size_t size_n) {
   if (count == 0 and qbit+count*size_n <= size()) {
       sstr err;
       err << "\'cout\' argument should be greater than 0 "
-          << "and \'qbit+count\' suld be in the range of 0 to "
+          << "and \'qbit+count\' should be in the range of 0 to "
           << size();
       throw std::invalid_argument{err.str()};
   }
@@ -653,12 +656,12 @@ inline void QSystem::valid_swap(size_t qbit_a, size_t qbit_b) {
 }
 
 /******************************************************/
-inline void QSystem::valid_range(size_t qbegin, size_t qend) {
-  if (qbegin >= size() or qend > size() or qbegin >= qend) {
+inline void QSystem::valid_range(size_t qbit_begin, size_t qbit_end) {
+  if (qbit_begin >= size() or qbit_end > size() or qbit_begin >= qbit_end) {
       sstr err;
-      err << "\'qbegin\' argument should be in the "
+      err << "\'qbit_begin\' argument should be in the "
           << "range of 0 to " << (size()-1)
-          << " and argument \'qend\' should be greater than \'qbegin\' "
+          << " and argument \'qbit_end\' should be greater than \'qbit_begin\' "
           << "and in the range of 1 to " << size();
       throw std::invalid_argument{err.str()};
   }
@@ -683,9 +686,9 @@ inline void QSystem::valid_p(double p) {
 }
 
 inline void QSystem::valid_state() {
-  if (_state != "matrix") {
+  if (_representation != "matrix") {
     sstr err;
-    err << "\'state\' must be in \"matrix\" to apply this channel";
+    err << "\'representation\' must be in \"matrix\" to apply this channel";
     throw std::runtime_error{err.str()};
   }
 }
@@ -701,29 +704,29 @@ inline void QSystem::valid_krau(vec_str &kraus) {
   }
 }
 
-inline void QSystem::valid_state_str(str &state) {
-  if (state != "matrix" and state != "vector" and state != "bitwise") {
+inline void QSystem::valid_state_str(str &representation) {
+  if (representation != "matrix" and representation != "vector" and representation != "bitwise") {
     sstr err;
-    err << "\'state\' argument must have value " 
+    err << "\'representation\' argument must have value " 
         <<  "\"vector\", \"matrix\" or \"bitwise\", not \""
-        << state << "\"";
+        << representation << "\"";
     throw std::invalid_argument{err.str()};
   }
 }
 
-inline void QSystem::valid_init(size_t init, size_t nqbits) {
-  if (init >= (1ul << nqbits)) {
+inline void QSystem::valid_init(size_t init, size_t num_qbits) {
+  if (init >= (1ul << num_qbits)) {
     sstr err;
     err << "\'init\' argument must be in the range of 0 to "
-        << (1ul << nqbits);
+        << (1ul << num_qbits);
     throw std::invalid_argument{err.str()};
   }
 }
 
 inline void QSystem::valid_not_bw() {
-  if (state() == "bitwise") {
+  if (representation() == "bitwise") {
     sstr err;
-    err << "\'state\' can not be in \"bitwise\" to use this method";
+    err << "\'representation\' can not be in \"bitwise\" to use this method";
     throw std::runtime_error{err.str()};
   }
 }

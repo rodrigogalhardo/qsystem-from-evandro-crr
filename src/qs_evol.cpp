@@ -31,81 +31,31 @@ using namespace arma;
 void QSystem::evol(char gate,
                  size_t qbit, 
                  size_t count,
-                   bool inver) {
+                   bool invert) {
   valid_qbit("qbit", qbit);
 
-  if (state() != "bitwise") {
+  if (_representation != "bitwise") {
 
     valid_count(qbit, count);
     sync(qbit, qbit+count);
     for (size_t i = 0; i < count; i++) {
       ops(qbit+i).tag = Gate_aux::GATE_1;
       ops(qbit+i).data = gate;
-      ops(qbit+i).inver = inver;
+      ops(qbit+i).invert = invert;
     }
 
     _sync = false;
   } else {
     for (size_t k = 0; k < count; k++) {
-      dict bw_tmp;
       switch (gate) {
-        case 'I':
-          return;
-
-        case 'X':
-          for (auto &i : bwqbits) {
-            size_t j = i.first ^ (1ul << ((size()-qbit+k-1)));
-            bw_tmp[j] = i.second; 
-          }
-          bwqbits = bw_tmp;
-          break;
-
-        case 'Y':
-          for (auto& i : bwqbits) {
-            size_t j = i.first ^ (1ul << (size()-qbit+k-1));
-            if (i.first & (1ul << (size()-qbit-1)))
-              bw_tmp[j] = i.second*complex(0, -1);
-            else
-              bw_tmp[j] = i.second*complex(0, 1);
-          }
-          bwqbits = bw_tmp;
-          break;
-            
-        case 'Z':
-          for (auto &i : bwqbits) 
-            if (i.first & (1ul << (size()-qbit+k-1)))
-              bwqbits[i.first] *= -1;
-          break;
-            
-        case 'H':
-          for (auto &i : bwqbits) {
-            if (i.first & (1ul << (size()-qbit+k-1)))
-              bw_tmp[i.first] -= i.second/std::sqrt(2);
-            else
-              bw_tmp[i.first] += i.second/std::sqrt(2);
-            if (std::abs(bw_tmp[i.first]) < 1e-10) 
-              bw_tmp.erase(i.first);
-            
-            size_t j = i.first ^ (1ul << (size()-qbit+k-1));
-            bw_tmp[j] += i.second/std::sqrt(2);
-            if (std::abs(bw_tmp[j]) < 1e-10) 
-              bw_tmp.erase(j);
-          }
-          bwqbits = bw_tmp;
-          break;
-            
-        case 'S':
-          for (auto &i : bwqbits) 
-            if (i.first & (1ul << (size()-qbit+k-1)))
-              bwqbits[i.first] *= complex(0, 1);
-          break;
-            
-        case 'T':
-          for (auto &i : bwqbits) 
-            if (i.first & (1ul << (size()-qbit+k-1)))
-              bwqbits[i.first] *= complex(1/std::sqrt(2), 1/std::sqrt(2));
-          break;
-      }
+        case 'I': return;
+        case 'X': evol_x(qbit+k); break;
+        case 'Y': evol_y(qbit+k); break;
+        case 'Z': evol_z(qbit+k); break;
+        case 'H': evol_h(qbit+k); break;
+        case 'S': evol_s(qbit+k); break;
+        case 'T': evol_t(qbit+k); break;
+        }
     }
   }
 }
@@ -114,7 +64,7 @@ void QSystem::evol(char gate,
 void QSystem::rot(char axis, double angle, size_t qbit, size_t count) {
   valid_gate("axis", axis);
 
-  if (state() != "bitwise") {
+  if (_representation != "bitwise") {
     sync(qbit, qbit+count);
     for (size_t i = 0; i < count; i++) {
       ops(qbit+i).tag = Gate_aux::R;
@@ -136,7 +86,7 @@ void QSystem::rot(char axis, double angle, size_t qbit, size_t count) {
             if (std::abs(bw_tmp[j]) < 1e-10) 
               bw_tmp.erase(j);
           }
-          bwqbits = bw_tmp;
+          bwqbits.swap(bw_tmp);
 
           break;
 
@@ -155,7 +105,7 @@ void QSystem::rot(char axis, double angle, size_t qbit, size_t count) {
             if (std::abs(bw_tmp[j]) < 1e-10) 
               bw_tmp.erase(j);
           }
-          bwqbits = bw_tmp;
+          bwqbits.swap(bw_tmp);
  
           break;
         case 'Z':
@@ -176,7 +126,7 @@ void QSystem::u3(double theta,
                  double lambd,
                  size_t qbit, 
                  size_t count) {
-  if (state() != "bitwise") {
+  if (_representation != "bitwise") {
     sync(qbit, qbit+count);
     for (size_t i = 0; i < count; i++) {
       ops(qbit+i).tag = Gate_aux::U3;
@@ -209,7 +159,7 @@ void QSystem::u3(double theta,
             bw_tmp.erase(j);
         }
       }
-      bwqbits = bw_tmp;
+      bwqbits.swap(bw_tmp);
     }
   }
 }
@@ -219,7 +169,7 @@ void QSystem::u2(double phi,
                  double lambd,
                  size_t qbit, 
                  size_t count) {
-  if (state() != "bitwise") {
+  if (_representation != "bitwise") {
     sync(qbit, qbit+count);
     for (size_t i = 0; i < count; i++) {
       ops(qbit+i).tag = Gate_aux::U3;
@@ -252,7 +202,7 @@ void QSystem::u2(double phi,
             bw_tmp.erase(j);
         }
       }
-      bwqbits = bw_tmp;
+      bwqbits.swap(bw_tmp);
     }
   }
 }
@@ -261,7 +211,7 @@ void QSystem::u2(double phi,
 void QSystem::u1(double lambd,
                  size_t qbit, 
                  size_t count) {
-  if (state() == "bitwise") {
+  if (_representation == "bitwise") {
     sync(qbit, qbit+count);
     for (size_t i = 0; i < count; i++) {
       ops(qbit+i).tag = Gate_aux::U3;
@@ -278,16 +228,16 @@ void QSystem::u1(double lambd,
 }
 
 /******************************************************/
-void QSystem::apply(Gate gate, size_t qbit, size_t count, bool inver) {
+void QSystem::apply(Gate gate, size_t qbit, size_t count, bool invert) {
   size_t size_n = log2(gate.get_mat()->n_rows);
   valid_count(qbit, count, size_n);
-  if (state() != "bitwise") {
+  if (_representation != "bitwise") {
     sync(qbit, qbit+count*size_n);
     for (size_t i = 0; i < count; i++) {
       size_t index = qbit+i*size_n;
       fill(Gate_aux::GATE_N, index, size_n);
       ops(index).data = gate.get_mat();
-      ops(index).inver = inver;
+      ops(index).invert = invert;
     }
   } else {
     dict bw_tmp;
@@ -297,7 +247,7 @@ void QSystem::apply(Gate gate, size_t qbit, size_t count, bool inver) {
       size_t y = i.first >> (size()-qbit+size_n);
       y = y & ((1ul << size_n)-1);
       size_t z = i.first & ((1ul << (size()-qbit+size_n))-1);
-      auto &setu = gate.get_matbw(y);
+      auto &setu = gate.get_bwgate(y);
       for (auto &j : setu) {
         size_t xjz = x|(j.second << (size()-qbit+size_n))|z;
         bw_tmp[xjz] += i.second*j.first;
@@ -305,7 +255,7 @@ void QSystem::apply(Gate gate, size_t qbit, size_t count, bool inver) {
           bw_tmp.erase(xjz);
       }
     }
-    bwqbits = bw_tmp;
+    bwqbits.swap(bw_tmp);
   }
 }
 
@@ -313,7 +263,7 @@ void QSystem::apply(Gate gate, size_t qbit, size_t count, bool inver) {
 void QSystem::cnot(size_t target, vec_size_t control) {
   valid_qbit("target", target);
   valid_control(control);
-  if (state() != "bitwise") {
+  if (_representation != "bitwise") {
     auto [size_n, minq] = cut(target, control);
     fill(Gate_aux::CNOT, minq, size_n);
     ops(minq).data = cnot_pair{target, control};
@@ -331,7 +281,7 @@ void QSystem::cnot(size_t target, vec_size_t control) {
         bw_tmp[i.first] = i.second;
       }
     }
-    bwqbits = bw_tmp;
+    bwqbits.swap(bw_tmp);
   }
 }
 
@@ -341,7 +291,7 @@ void QSystem::cphase(complex phase, size_t target, vec_size_t control) {
   valid_phase(phase);
   valid_control(control);
 
-  if (state() != "bitwise") {
+  if (_representation != "bitwise") {
     auto [size_n, minq] = cut(target, control);
     fill(Gate_aux::CPHASE, minq, size_n);
     ops(minq).data = cph_tuple{phase, target, control};
@@ -359,7 +309,7 @@ void QSystem::cphase(complex phase, size_t target, vec_size_t control) {
         bw_tmp[i.first] = i.second;
       }
     }
-    bwqbits = bw_tmp;
+    bwqbits.swap(bw_tmp);
   }
 }
 
@@ -367,7 +317,7 @@ void QSystem::cphase(complex phase, size_t target, vec_size_t control) {
 void QSystem::swap(size_t qbit_a, size_t qbit_b) {
   valid_swap(qbit_a, qbit_b);
   
-  if (state() != "bitwise") {
+  if (_representation != "bitwise") {
     if (qbit_a == qbit_b) return;
     size_t a = qbit_a < qbit_b? qbit_a :  qbit_b;
     size_t b = qbit_a > qbit_b? qbit_a :  qbit_b;
@@ -385,16 +335,16 @@ void QSystem::swap(size_t qbit_a, size_t qbit_b) {
         bw_tmp[i.first] = i.second;
       }
     }
-    bwqbits = bw_tmp;
+    bwqbits.swap(bw_tmp);
   }
 }
 
 /******************************************************/
-void QSystem::qft(size_t qbegin, size_t qend, bool inver) {
+void QSystem::qft(size_t qbegin, size_t qend, bool invert) {
   valid_range(qbegin, qend);
 
   fill(Gate_aux::QFT, qbegin, qend-qbegin);
-  ops(qbegin).inver = inver;
+  ops(qbegin).invert = invert;
 }
 
 /******************************************************/
@@ -409,9 +359,9 @@ void QSystem::sync() {
     evolm = kron(evolm, get_gate(ops(i)));
   }
 
-  if (_state == "vector")
+  if (_representation == "vector")
     qbits = evolm*qbits;
-  else if (_state == "matrix")
+  else if (_representation == "matrix")
     qbits = evolm*qbits*evolm.t();
 
   delete[] _ops;
@@ -449,7 +399,7 @@ sp_cx_mat QSystem::get_gate(Gate_aux &op) {
       case Gate_aux::GATE_N:
         return *std::get<mat_ptr>(op.data);
       case Gate_aux::R:
-        return make_r(std::get<r_pair>(op.data).first,
+        return make_rot(std::get<r_pair>(op.data).first,
                       std::get<r_pair>(op.data).second);
       case Gate_aux::U3:
         return make_u3(std::get<0>(std::get<u3_tuple>(op.data)),
@@ -471,7 +421,7 @@ sp_cx_mat QSystem::get_gate(Gate_aux &op) {
       }
   };
 
-  if (op.inver) 
+  if (op.invert) 
     return get().t();
   else 
     return get();
@@ -504,4 +454,72 @@ void QSystem::fill(Gate_aux::Tag tag, size_t qbit, size_t size_n) {
 
   _sync = false;
 }
+
+/******************************************************/
+void QSystem::evol_h(size_t qbit) {
+  dict bw_tmp;
+
+  for (auto &i : bwqbits) {
+    if (i.first & (1ul << (size()-qbit-1)))
+      bw_tmp[i.first] -= i.second/std::sqrt(2);
+    else 
+      bw_tmp[i.first] += i.second/std::sqrt(2);
+    if (std::abs(bw_tmp[i.first]) < 1e-10) 
+      bw_tmp.erase(i.first);
+
+    size_t j = i.first ^ (1ul << (size()-qbit-1));
+    bw_tmp[j] += i.second/std::sqrt(2);
+    if (std::abs(bw_tmp[j]) < 1e-10) 
+      bw_tmp.erase(j);
+  }
+
+  bwqbits.swap(bw_tmp);
+}
+
+/******************************************************/
+void QSystem::evol_x(size_t qbit) {
+  dict bw_tmp;
+  for (auto &i : bwqbits) {
+    size_t j = i.first ^ (1ul << ((size()-qbit-1)));
+    bw_tmp[j] = i.second; 
+  }
+
+  bwqbits.swap(bw_tmp);
+}
+
+/******************************************************/
+void QSystem::evol_y(size_t qbit) {
+  dict bw_tmp;
+  for (auto& i : bwqbits) {
+    size_t j = i.first ^ (1ul << (size()-qbit-1));
+    if (i.first & (1ul << (size()-qbit-1)))
+      bw_tmp[j] = i.second*complex(0, -1);
+    else
+      bw_tmp[j] = i.second*complex(0, 1);
+  }
+
+  bwqbits.swap(bw_tmp);
+}
+
+/******************************************************/
+void QSystem::evol_z(size_t qbit) {
+  for (auto &i : bwqbits) 
+    if (i.first & (1ul << (size()-qbit-1)))
+      bwqbits[i.first] *= -1;
+}
+
+/******************************************************/
+void QSystem::evol_s(size_t qbit) {
+  for (auto &i : bwqbits) 
+    if (i.first & (1ul << (size()-qbit-1)))
+      bwqbits[i.first] *= complex(0, 1);
+}
+
+/******************************************************/
+void QSystem::evol_t(size_t qbit) {
+  for (auto &i : bwqbits) 
+    if (i.first & (1ul << (size()-qbit-1)))
+      bwqbits[i.first] *= complex(1/std::sqrt(2), 1/std::sqrt(2));
+}
+
 

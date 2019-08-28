@@ -1,13 +1,13 @@
---- qsystem/__init__.py	2019-05-28 20:00:04.126658449 -0300
-+++ qsystem/__init__b.py	2019-05-28 20:00:01.433293321 -0300
+--- qsystem/__init__.py	2019-08-28 10:48:44.146858402 -0300
++++ qsystem/__init__b.py	2019-08-28 10:45:54.031404471 -0300
 @@ -685,8 +685,8 @@
      thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc='The membership flag')
      __repr__ = _swig_repr
  
 -    def __init__(self, *args):
 -        _qsystem.QSystem_swiginit(self, _qsystem.new_QSystem(*args))
-+    def __init__(self, nqbits, seed=42, state="vector", init=0):
-+        _qsystem.QSystem_swiginit(self, _qsystem.new_QSystem(nqbits, seed, state, init))
++    def __init__(self, num_qbits, seed=42, representation="bitwise", init=0):
++        _qsystem.QSystem_swiginit(self, _qsystem.new_QSystem(num_qbits, seed, representation, init))
      __swig_destroy__ = _qsystem.delete_QSystem
  
-     def evol(self, gate, qbit, count=1, inver=False):
+     def evol(self, gate, qbit, count=1, invert=False):

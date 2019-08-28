@@ -38,13 +38,13 @@ class Gate {
 
     //! Constructor 
     /*!
-     * Constructor used by the functions make_gate, make_mgate,
-     * make_cgate and make_fgate.
+     * Constructor used by the functions from_matrix, from_sp_matrix,
+     * cxz_gate and from_func.
      *
-     * \param mat sparce matrix pointer.
-     * \sa Gate::make_gate Gate::make_mgate Gate::make_cgate Gate::make_fgate
+     * \param mat sparse matrix pointer.
+     * \sa Gate::from_matrix Gate::from_sp_matrix Gate::cxz_gate Gate::from_func
      */
-    Gate(mat_ptr mat, set_mat matbw);
+    Gate(mat_ptr mat, set_mat bwgate);
 
     //! Get a string with the matrix
     /*!
@@ -71,9 +71,9 @@ class Gate {
      *
      * \param matrix list of complex.
      * \return Gate class.
-     * \sa Gate::make_mgate Gate::make_cgate Gate::make_fgate
+     * \sa Gate::from_sp_matrix Gate::cxz_gate Gate::from_func
      */
-    static Gate make_gate(vec_complex matrix);
+    static Gate from_matrix(vec_complex matrix);
 
     //! Create a quantum gate from a sparse matrix
     /*!
@@ -85,12 +85,12 @@ class Gate {
      * \param col list of column indices 
      * \param value list of non-zero elements. 
      * \return Gate class.
-     * \sa Gate::make_gate Gate::make_cgate Gate::make_fgate
+     * \sa Gate::from_matrix Gate::cxz_gate Gate::from_func
      */
-    static Gate make_mgate(size_t size,
-                       vec_size_t row,
-                       vec_size_t col,
-                      vec_complex value);
+    static Gate from_sp_matrix(size_t size,
+                           vec_size_t row,
+                           vec_size_t col,
+                          vec_complex value);
 
     //! Create a controlled gate of X and Z
     /*!
@@ -100,10 +100,10 @@ class Gate {
      * \param gates string with all the one qubit quantum gates, *e.g.* `"XZZXI"`.
      * \param control list of control gates.
      * \return Gate class.
-     * \sa Gate::make_gate Gate::make_mgate Gate::make_fgate
+     * \sa Gate::from_matrix Gate::from_sp_matrix Gate::from_func
      */
-    static Gate make_cgate(str gates,
-                    vec_size_t control);
+    static Gate cxz_gate(str gates,
+                  vec_size_t control);
 
     //! Create a quantum gate from a Python function
     /*! 
@@ -116,11 +116,11 @@ class Gate {
      * \param size number of qubits affected by the gate.
      * \param iterator with the matrix order of creation.
      * \return Gate class.
-     * \sa Gate::make_gate Gate::make_mgate Gate::make_cgate
+     * \sa Gate::from_matrix Gate::from_sp_matrix Gate:cxz_gate
      */
-    static Gate make_fgate(py_function func,
-                                size_t size,
-                           py_iterator iterator=Py_None);
+    static Gate from_func(py_function func,
+                               size_t size,
+                          py_iterator iterator=Py_None);
 
     //! Return the matrix pointer
     /*! 
@@ -130,10 +130,18 @@ class Gate {
      * \sa QSystem
      */
     mat_ptr& get_mat();
-    set& get_matbw(size_t i);
+
+    //! Return the bitwise gate pointer
+    /*! 
+     * Method used by the QSystem class.
+     * 
+     * \return gate pointer.
+     * \sa QSystem
+     */
+    set& get_bwgate(size_t i);
 
     private:
     mat_ptr mat;
-    set_mat matbw;
+    set_mat bwgate;
 };
 
