@@ -66,6 +66,6 @@ Seed the [wiki](https://gitlab.com/evandro-crr/qsystem/wikis/home) and the
 [documentation](https://evandro-crr.gitlab.io/qsystem/index.html).
 
 ---------------------------
-This software is suported by 
+This software is supported by 
 <img src="http://www.fapesc.sc.gov.br/wp-content/uploads/2014/09/logo-Fapesc-fundo-transparente.png"
 alt="FEPESC" width="54">
