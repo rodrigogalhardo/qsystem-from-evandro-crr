@@ -8,4 +8,5 @@ qsystem/
 src/qsystem.cpp
 doxygen/documentation
 test.py
+test
 .vscode
