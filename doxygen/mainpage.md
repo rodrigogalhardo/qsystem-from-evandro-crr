@@ -5,7 +5,8 @@ You can get QSystem using pip.
 pip install qsystem
 ```
 >>>
-It's necessary to have a C/C++ compiler to install using pip.
+QSystem depends on [Boost C++ Libraries](https://www.boost.org) and requires
+a C/C++ compiler.
 >>>
 
 For code examples access the [wiki](https://gitlab.com/evandro-crr/qsystem/wikis).

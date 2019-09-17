@@ -66,7 +66,7 @@ using size_t = long unsigned;
 %include "../header/using.h"
 
 %pythoncode %{
-version = '1.2.0b'
+version = '1.2.0b1'
 def get_matrix(q):
     from scipy import sparse
     return sparse.csc_matrix(q.get_qbits()[0], q.get_qbits()[1])
