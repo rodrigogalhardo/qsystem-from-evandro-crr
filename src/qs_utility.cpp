@@ -199,16 +199,37 @@ std::string QSystem::representation() {
 
 /******************************************************/
 void QSystem::save(std::string path) {
-//TODO
-  sync();
-  qbits.save(path, arma_binary);
+
+  std::ofstream outfile(path);
+  if (representation() != "bitwise") {
+    sync();
+    outfile.write("QsMT", 4);
+    qbits.save(outfile, arma_binary);
+  } else {
+    outfile.write("QsBW", 4);
+    outfile << size();
+    boost::archive::binary_oarchive oarchf(outfile);
+    oarchf << bwqbits;
+  }
+  outfile.close();
 }
 
 void QSystem::load(std::string path) {
-//TODO
-  qbits.load(path, arma_binary);
-  _size = log2(qbits.n_rows);
-  _representation = qbits.n_cols > 1 ? "matrix" : "vector";
+  std::ifstream infile(path);
+  char tag[5];
+  infile.read(tag, 4);
+  tag[4] = '\0';
+
+  if (std::strcmp("QsBW", tag) != 0) {
+    qbits.load(infile, arma_binary);
+    _size = log2(qbits.n_rows);
+    _representation = qbits.n_cols > 1 ? "matrix" : "vector";
+  } else {
+    infile >> _size;
+    boost::archive::binary_iarchive iarch(infile);
+    iarch >> bwqbits;
+    _representation = "bitwise";    
+  }
   clear();
 }
 
@@ -225,6 +246,7 @@ void QSystem::clear() {
 
   delete[] _ops;
   delete[] _bits;
-  _ops = new Gate_aux[_size]();
+  if (representation() != "bitwise")
+    _ops = new Gate_aux[_size]();
   _bits = new Bit[_size]();
 }

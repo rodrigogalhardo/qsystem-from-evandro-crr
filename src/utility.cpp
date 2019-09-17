@@ -29,7 +29,7 @@ str utility::cx_to_str(complex i, bool use_sqrt) {
   if (fabs(i.imag()) < 1e-14) {
     double tmp = 1.0/pow(i.real(), 2);
     int itmp = tmp;
-    if (use_sqrt and itmp != 1 and tmp - double(itmp) < 1e-10) {
+    if (use_sqrt and itmp != 1 and abs(tmp - double(itmp)) <= 1e-9) {
       ss << (signbit(i.real())? '-' : '+') << std::left << std::setw(11)
          << str{"1/sqrt(" + std::to_string(itmp) + ")"} << std::left
          << std::setw(12) << ' ';
@@ -41,7 +41,7 @@ str utility::cx_to_str(complex i, bool use_sqrt) {
   } else if (fabs(i.real()) < 1e-14) {
     double tmp = 1.0/pow(i.imag(), 2);
     int itmp = tmp;
-    if (use_sqrt and itmp != 1 and tmp - double(itmp) < 1e-10) {
+    if (use_sqrt and itmp != 1 and abs(tmp - double(itmp)) <= 1e-9) {
       ss << std::left << std::setw(12) << ' ' 
          << (signbit(i.imag())? '-' : '+')
          << std::left << std::setw(11) 
@@ -54,7 +54,7 @@ str utility::cx_to_str(complex i, bool use_sqrt) {
   } else {
     double tmp = 1.0/pow(i.real(), 2);
     int itmp = tmp;
-    if (use_sqrt and itmp != 1 and tmp - double(itmp) < 1e-10) 
+    if (use_sqrt and itmp != 1 and abs(tmp - double(itmp)) <= 1e-9) 
       ss << (signbit(i.real())? '-' : '+') 
          << std::left << std::setw(11)
          << str{"1/sqtr(" + std::to_string(itmp) + ")"};
@@ -62,7 +62,7 @@ str utility::cx_to_str(complex i, bool use_sqrt) {
       ss << std::showpos << std::fixed << std::setprecision(9) << i.real();
     tmp = 1.0/pow(i.imag(), 2);
     itmp = tmp;
-    if (use_sqrt and itmp != 1 and tmp - double(itmp) < 1e-10) 
+    if (use_sqrt and itmp != 1 and abs(tmp - double(itmp)) <= 1e-9) 
       ss << (signbit(i.imag())? '-' : '+') 
          << std::left << std::setw(11) 
          << str{"i/sqrt(" + std::to_string(itmp) + ")"};

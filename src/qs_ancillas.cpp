@@ -102,17 +102,12 @@ void QSystem::rm_ancillas() {
     delete[] an_ops;
     an_ops = nullptr;
   } else {
+    measure(_size, an_size);
     dict bw_tmp;
     
     for (auto &i : bwqbits) {
       auto j = i.first >> an_size;
-
-      if (bw_tmp.find(j) != bw_tmp.end()) {
-        bw_tmp[j] = complex{sqrt(pow(bw_tmp[j].real(), 2)+pow(i.second.real(), 2)),
-                            sqrt(pow(bw_tmp[j].imag(), 2)+pow(i.second.imag(), 2))};
-      } else {
-        bw_tmp[j] = i.second;
-      }
+      bw_tmp[j] = i.second;
     }
 
     bwqbits.swap(bw_tmp);

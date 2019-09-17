@@ -34,10 +34,9 @@ void QSystem::evol(char gate,
                  size_t count,
                    bool invert) {
   valid_qbit("qbit", qbit);
-
+  valid_count(qbit, count);
   if (_representation != "bitwise") {
 
-    valid_count(qbit, count);
     sync(qbit, qbit+count);
     for (size_t i = 0; i < count; i++) {
       ops(qbit+i).tag = Gate_aux::GATE_1;
@@ -64,6 +63,7 @@ void QSystem::evol(char gate,
 /******************************************************/
 void QSystem::rot(char axis, double angle, size_t qbit, size_t count) {
   valid_gate("axis", axis);
+  valid_count(qbit, count);
 
   if (_representation != "bitwise") {
     sync(qbit, qbit+count);
@@ -127,6 +127,7 @@ void QSystem::u3(double theta,
                  double lambd,
                  size_t qbit, 
                  size_t count) {
+  valid_count(qbit, count);
   if (_representation != "bitwise") {
     sync(qbit, qbit+count);
     for (size_t i = 0; i < count; i++) {
@@ -170,11 +171,12 @@ void QSystem::u2(double phi,
                  double lambd,
                  size_t qbit, 
                  size_t count) {
+  valid_count(qbit, count);
   if (_representation != "bitwise") {
     sync(qbit, qbit+count);
     for (size_t i = 0; i < count; i++) {
       ops(qbit+i).tag = Gate_aux::U3;
-      ops(qbit+i).data = u3_tuple{M_PI/2, phi, lambd};
+      ops(qbit+i).data = u3_tuple{acos(-1)/2, phi, lambd};
     }
     _sync = false;
   } else {
@@ -212,7 +214,8 @@ void QSystem::u2(double phi,
 void QSystem::u1(double lambd,
                  size_t qbit, 
                  size_t count) {
-  if (_representation == "bitwise") {
+  valid_count(qbit, count);
+  if (_representation != "bitwise") {
     sync(qbit, qbit+count);
     for (size_t i = 0; i < count; i++) {
       ops(qbit+i).tag = Gate_aux::U3;
@@ -546,5 +549,3 @@ void QSystem::evol_t(size_t qbit) {
     if (i.first & (1ul << (size()-qbit-1)))
       bwqbits[i.first] *= complex(1/std::sqrt(2), 1/std::sqrt(2));
 }
-
-

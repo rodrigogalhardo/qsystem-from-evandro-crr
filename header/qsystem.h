@@ -173,7 +173,7 @@ class QSystem {
     /*!
      * The gate will be applied from the qubits `qbit` to `qbit+cout`.
      * \f[ 
-     * u2 = 
+     * u2 = {1\over\sqrt{2}}
      * \begin{bmatrix}
      * 1 & -e^{i\lambda} \\
      * e^{i\phi} & e^{i(\lambda+\phi)}
@@ -610,7 +610,7 @@ inline void QSystem::valid_qbit(str name, size_t qbit) {
 
 /******************************************************/
 inline void QSystem::valid_count(size_t qbit, size_t count, size_t size_n) {
-  if (count == 0 and qbit+count*size_n <= size()) {
+  if (count == 0 or qbit+count*size_n > size()) {
       sstr err;
       err << "\'cout\' argument should be greater than 0 "
           << "and \'qbit+count\' should be in the range of 0 to "
