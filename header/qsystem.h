@@ -518,9 +518,9 @@ class QSystem {
      */
     void rm_ancillas();
 
-  private:
     /* src/qs_evol.cpp */
     void            sync();
+  private:
     void            sync(size_t qbit_begin, size_t qbit_end);
     Gate_aux&       ops(size_t index);
     arma::sp_cx_mat get_gate(Gate_aux &op);
