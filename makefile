@@ -6,7 +6,7 @@ HEADER = $(wildcard header/*.h)
 
 OUT = qsystem/_qsystem.so
 
-PYTHON = /usr/include/python3.7m/
+PYTHON = /usr/include/python3.8/
 
 CXXFLAGS = -Wall -O2 -fPIC -std=c++17 -I$(PYTHON)
 CLINK = -shared -Xlinker -export-dynamic -lboost_serialization 
@@ -30,10 +30,10 @@ dist: src/qsystem.cpp qsystem/__init__.py armadillo-code
 	python setup.py sdist 
 
 armadillo-code:
-	git clone https://gitlab.com/conradsnicta/armadillo-code.git --branch 9.600.x
+	git clone https://gitlab.com/conradsnicta/armadillo-code.git --branch 9.800.x
 
 install: dist
-	pip install dist/*
+	pip install dist/* --user 
 
 doc:
 	doxygen doxygen/Doxyfile
