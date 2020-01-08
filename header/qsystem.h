@@ -530,8 +530,8 @@ class QSystem {
     void            evol_x(size_t qbit);
     void            evol_y(size_t qbit);
     void            evol_z(size_t qbit);
-    void            evol_s(size_t qbit);
-    void            evol_t(size_t qbit);
+    void            evol_s(size_t qbit, bool invert);
+    void            evol_t(size_t qbit, bool invert);
     void            evol_h(size_t qbit);
 
     /* src/qs_make.cpp */

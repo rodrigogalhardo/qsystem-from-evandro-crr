@@ -53,8 +53,8 @@ void QSystem::evol(char gate,
         case 'Y': evol_y(qbit+k); break;
         case 'Z': evol_z(qbit+k); break;
         case 'H': evol_h(qbit+k); break;
-        case 'S': evol_s(qbit+k); break;
-        case 'T': evol_t(qbit+k); break;
+        case 'S': evol_s(qbit+k, invert); break;
+        case 'T': evol_t(qbit+k, invert); break;
         }
     }
   }
@@ -537,15 +537,25 @@ void QSystem::evol_z(size_t qbit) {
 }
 
 /******************************************************/
-void QSystem::evol_s(size_t qbit) {
-  for (auto &i : bwqbits) 
-    if (i.first & (1ul << (size()-qbit-1)))
-      bwqbits[i.first] *= complex(0, 1);
+void QSystem::evol_s(size_t qbit, bool invert) {
+  for (auto &i : bwqbits) {
+    if (i.first & (1ul << (size()-qbit-1))) {
+      if (invert)
+        bwqbits[i.first] *= complex(0, -1);
+      else
+        bwqbits[i.first] *= complex(0, 1);
+    }
+  }
 }
 
 /******************************************************/
-void QSystem::evol_t(size_t qbit) {
-  for (auto &i : bwqbits) 
-    if (i.first & (1ul << (size()-qbit-1)))
-      bwqbits[i.first] *= complex(1/std::sqrt(2), 1/std::sqrt(2));
+void QSystem::evol_t(size_t qbit, bool invert) {
+  for (auto &i : bwqbits) {
+    if (i.first & (1ul << (size()-qbit-1))) {
+      if (invert)
+        bwqbits[i.first] *= complex(1/std::sqrt(2), -1/std::sqrt(2));
+      else 
+        bwqbits[i.first] *= complex(1/std::sqrt(2), 1/std::sqrt(2));
+    }
+  }
 }
