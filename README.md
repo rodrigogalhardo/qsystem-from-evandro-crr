@@ -60,6 +60,29 @@ To install use the follow command:
 ```
 pip install QSystem
 ```
+
+# Bitwise representation
+
+The current release has three distinct ways to represent the quantum state: 
+vector, matrix, and the proposed bitwise. The latter is a new way to store and
+manipulate both states and operations which shows an exponential advantage with
+the amount of superposition in the systems state.
+
+For more information see our paper [arXiv:2004.03560](https://arxiv.org/abs/2004.03560).
+
+```bib
+@article{qsystem,
+    title={QSystem: bitwise representation for quantum circuit simulations},
+    author={Evandro Chagas Ribeiro da Rosa and Bruno G. Taketani},
+    year={2020},
+    eprint={2004.03560},
+    archivePrefix={arXiv},
+    primaryClass={quant-ph}
+}
+```
+
+
+
 ---------------------------
 Seed the API
 [documentation](https://evandro-crr.gitlab.io/qsystem/index.html).
