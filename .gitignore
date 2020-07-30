@@ -2,7 +2,6 @@
 **/.ipynb_checkpoints
 **/__pycache__/
 QSystem.egg-info/
-armadillo-code/
 dist/
 qsystem/
 src/qsystem.cpp
@@ -10,3 +9,6 @@ doxygen/documentation
 test.py
 test
 .vscode
+buid/
+_skbuild/
+MANIFEST

@@ -1,2 +1,7 @@
+include README.md
+include CMakeLists.txt
+include LICENSE
 include header/*.h
+include src/*.cpp
+include src/*.c
 recursive-include armadillo-code/include *
